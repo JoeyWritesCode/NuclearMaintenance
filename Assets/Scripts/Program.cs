@@ -25,20 +25,34 @@ using UnityEngine.AI;
 
 namespace Agents1
 {
-    public enum TerrainState { Normal, Fire, Water, GettingWater, None }
+    //public enum TerrainState { Normal, Fire, Water, GettingWater, None }
+    public GameObject agentPrefab;
 
     public class Program : MonoBehaviour
     {
-
         void Start() {
             var env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 250, randomOrder: false, parallel: false);
 
             var myAgent = new MyAgent();
             env.Add(myAgent, "mine");
 
+            Instantiate(agentPrefab, GetRandomPoint(GameObject.tranform.position, 10f), Quaternion.identity);
+
             env.Memory.Add("Size", 15);
 
             env.Start();
+        }
+
+        public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {
+            // Get Random Point inside Sphere which position is center, radius is maxDistance
+            Vector3 randomPos = Random.insideUnitSphere * maxDistance + center;
+
+            NavMeshHit hit; // NavMesh Sampling Info Container
+
+            // from randomPos find a nearest point on NavMesh surface in range of maxDistance
+            NavMesh.SamplePosition(randomPos, out hit, maxDistance, NavMesh.AllAreas);
+
+            return hit.position;
         }
     }
 
