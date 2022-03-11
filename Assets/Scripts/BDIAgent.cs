@@ -53,7 +53,7 @@ public class BDIAgent : Agent
 
         // This orchestrates the environment to inform which agent to do which action
         // perhaps we should start with percepts...
-        Send(_unity, $"go-to {_beliefs["destination"]}");
+        Send(_unity, "look-around");
     }
 
     public static Vector3 StringToVector3(string sVector)
@@ -166,7 +166,7 @@ public class BDIAgent : Agent
     private void GenerateOptions()
     {
         if (_desires.Count == 0)
-            _desires.Add("new-task");
+            _desires.Add("look-around");
 
         if (_intention == "complete-task" && _plan.Count > 0) // plan in progress
             return;
@@ -187,6 +187,8 @@ public class BDIAgent : Agent
             _desires.Remove("go-to");
             _desires.Add("look-around");
         }
+
+        Debug.Log(_desires);
     }
 
     private void FilterDesires()
@@ -234,8 +236,9 @@ public class BDIAgent : Agent
                         unfinishedTasks.Add(seenItem.Key);
                     } 
                 }
-                Debug.Log("loop done!");
-                next_item = GameObject.Find(unfinishedTasks[unfinishedTasks.Count - 1]).GetComponent<Item>();
+                Debug.Log($"loop done! {unfinishedTasks[0]}");
+                next_item = GameObject.Find(unfinishedTasks[0]).GetComponent<Item>();
+                Debug.Log($"next item is {next_item.name}");
                 unfinishedTasks.Remove(unfinishedTasks[unfinishedTasks.Count - 1]);
                 _beliefs["destination"] = next_item.GetPosition();
                 Debug.Log("next item found!");

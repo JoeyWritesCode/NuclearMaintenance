@@ -19,6 +19,8 @@ public class UnityAgent : Agent
 
     public GameObject Hands;
 
+    public Vector3 destination;
+
 
     public override void Setup()
     {
@@ -71,8 +73,14 @@ public class UnityAgent : Agent
             switch (action)
             {
                 case "go-to":
+                    if (_self.transform.position == destination) {
+                        Debug.Log("we're here!");
+                        Send(message.Sender, "arrived");
+                        break;
+                    }
                     NavMeshAgent nmAgent = _self.GetComponent<NavMeshAgent>();
-                    nmAgent.SetDestination(StringToVector3(parameters));
+                    destination = StringToVector3(parameters);
+                    nmAgent.SetDestination(destination);
                     break;
 
 /*                 case "enlist":
