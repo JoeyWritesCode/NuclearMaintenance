@@ -34,7 +34,7 @@ public class Program : MonoBehaviour
 
         for (int i = 0; i < numberOfAgents; i++) {
             
-            GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").tranform.position, 10f), Quaternion.identity);
+            GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").transform.position, 10f), Quaternion.identity);
             agentObject.name = "unity_" + i;
 
             var bdiAgent = new BDIAgent(agentObject.name);
@@ -51,7 +51,7 @@ public class Program : MonoBehaviour
 
     public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {
         // Get Random Point inside Sphere which position is center, radius is maxDistance
-        Vector3 randomPos = Random.insideUnitSphere * maxDistance + center;
+        Vector3 randomPos = UnityEngine.Random.insideUnitSphere * maxDistance + center;
 
         NavMeshHit hit; // NavMesh Sampling Info Container
 

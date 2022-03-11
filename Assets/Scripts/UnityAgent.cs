@@ -18,6 +18,8 @@ public class UnityAgent : Agent
 
     private HashSet<string> memory;
 
+    public GameObject Hands;
+
     public UnityAgent()
     {
         _self = GameObject.Find(Name);
@@ -40,6 +42,25 @@ public class UnityAgent : Agent
         position = 0; */
     }
 
+    public static Vector3 StringToVector3(string sVector)
+     {
+         // Remove the parentheses
+         if (sVector.StartsWith ("(") && sVector.EndsWith (")")) {
+             sVector = sVector.Substring(1, sVector.Length-2);
+         }
+ 
+         // split the items
+         string[] sArray = sVector.Split(',');
+ 
+         // store as a Vector3
+         Vector3 result = new Vector3(
+             float.Parse(sArray[0]),
+             float.Parse(sArray[1]),
+             float.Parse(sArray[2]));
+ 
+         return result;
+     }
+
     public override void Act(Message message)
     {
         try
@@ -55,7 +76,7 @@ public class UnityAgent : Agent
             {
                 case "go-to":
                     NavMeshAgent nmAgent = _self.GetComponent<NavMeshAgent>();
-                    nmAgent.SetDestination(parameters[0]);
+                    nmAgent.SetDestination(StringToVector3(parameters));
                     UpdateVisualField(message.Sender);
                     break;
 
@@ -73,15 +94,15 @@ public class UnityAgent : Agent
                     break; */
 
                 case "pick-up":
-                    pickUp(parameters[0]);
+                    pickUp(parameters);
                     break;
 
                 case "drop":
-                    drop(parameters[0]);
+                    drop(parameters);
                     break;
 
                 case "process":
-                    executeTask(parameters[0]);
+                    executeTask(parameters, message.Sender);
                     break;
 
                 case "look-around":
@@ -102,8 +123,8 @@ public class UnityAgent : Agent
     private void pickUp(string itemName) {
         GameObject item = GameObject.Find(itemName);
         item.GetComponent<Rigidbody>().useGravity = false;
-        item.transform.position = _self.Hands.position;
-        item.transform.parent = _self.Hands.transform;
+        item.transform.position = _self.transform.Find("Hands").position;
+        item.transform.parent = _self.transform.Find("Hands");
     }
 
     private void drop(string itemName) {
@@ -114,9 +135,9 @@ public class UnityAgent : Agent
 
     private void executeTask(string itemName, string sender) {
         // check how long the item requires (will fluctuate later with collaboration)
-        GameObject item = GameObject.Find(itemName);
+        Item item = GameObject.Find(itemName).GetComponent<Item>();
         if (item.isProcessed()) {
-            Destroy(item);
+            item.complete();
             Send(sender, $"task-completed {itemName}");
         }
         else {
@@ -125,15 +146,15 @@ public class UnityAgent : Agent
         }
     }
 
-    private HashSet<string> GetObjectsInRange(Vector3 position, float radius, string tag)
+    private List<string> GetObjectsInRange(Vector3 position, float radius, string tag)
     {
         List<string> seenObjects = new List<string>();
 
         Collider[] hitColliders = Physics.OverlapSphere(position, radius);
         foreach (var hitCollider in hitColliders)
         {
-            if (hitCollider.GameObject.tag == tag && !memory.Contains(hitCollider.GameObject.name)) {
-                seenObjects.Add(hitCollider.GameObject.name);
+            if (hitCollider.gameObject.tag == tag && !memory.Contains(hitCollider.gameObject.name)) {
+                seenObjects.Add(hitCollider.gameObject.name);
             }
         }
         

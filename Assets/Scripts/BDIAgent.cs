@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 using UnityEngine;
 using UnityEngine.AI;
@@ -17,8 +18,13 @@ public class BDIAgent : Agent
     private bool _needToReplan;
     private int _size;
 
+    private float travel_speed;
+    private float process_speed;
+
     private string _unity;
-    private GameObject next_item;
+    private Item next_item;
+
+    private List<string> unfinishedTasks;
 
     public BDIAgent(string unityName)
     {
@@ -28,6 +34,11 @@ public class BDIAgent : Agent
         _plan = new List<string>();
 
         _unity = unityName;
+
+        travel_speed = 5.0f;
+        process_speed = 5.0f;
+
+        next_item = GameObject.Find(_unity).GetComponent<Item>();
     }
 
     public override void Setup()
@@ -38,12 +49,38 @@ public class BDIAgent : Agent
 
         _beliefs["position"] = GameObject.Find(_unity).transform.position;
         _beliefs["destination"] = _beliefs["position"];
-        // What else should we add?
-        // track where items are... 
 
         // This orchestrates the environment to inform which agent to do which action
         // perhaps we should start with percepts...
-        Send(_unity, "percepts");
+        Send(_unity, "look-around");
+    }
+
+    public static Vector3 StringToVector3(string sVector)
+    {
+        // Remove the parentheses
+        if (sVector.StartsWith ("(") && sVector.EndsWith (")")) {
+            sVector = sVector.Substring(1, sVector.Length-2);
+        }
+
+        // split the items
+        string[] sArray = sVector.Split(',');
+
+        // store as a Vector3
+        Vector3 result = new Vector3(
+            float.Parse(sArray[0]),
+            float.Parse(sArray[1]),
+            float.Parse(sArray[2]));
+
+        return result;
+    }
+
+    public float TravelEffort(string key) {
+        Item item = GameObject.Find(key).GetComponent<Item>();
+        float distance = (item.GetPosition() - _beliefs["position"]).magnitude;
+        distance += (item.GetProcessPosition() - item.GetPosition()).magnitude;
+
+        float time = distance / travel_speed + item.GetRemainingTime() / process_speed;
+        return time;
     }
     
     // This message will be what informs this agent about the actions carried out.
@@ -58,7 +95,7 @@ public class BDIAgent : Agent
             switch (action)
             {
                 case "percepts":
-                    BeliefRevision(parameters, _memory);
+                    BeliefRevision(parameters);
                     GenerateOptions();
                     FilterDesires();
                     if (_needToReplan) // if the environment is very dynamic, one can replan after each perception act
@@ -68,8 +105,8 @@ public class BDIAgent : Agent
 
                 case "task-completed":
                     // for now, let's say if Vector.Zero then no current objective
-                    _beliefs["destination"] = Vector.Zero;
-                    _beliefs.Remove(next_item.name);
+                    _beliefs["destination"] = Vector3.zero;
+                    _beliefs.Remove(next_item.GetName());
                     GenerateOptions();
                     FilterDesires();
                     if (_needToReplan) // if the environment is very dynamic, one can replan after each perception act
@@ -106,25 +143,6 @@ public class BDIAgent : Agent
         }
     }
 
-    public static Vector3 StringToVector3(string sVector)
-     {
-         // Remove the parentheses
-         if (sVector.StartsWith ("(") && sVector.EndsWith (")")) {
-             sVector = sVector.Substring(1, sVector.Length-2);
-         }
- 
-         // split the items
-         string[] sArray = sVector.Split(',');
- 
-         // store as a Vector3
-         Vector3 result = new Vector3(
-             float.Parse(sArray[0]),
-             float.Parse(sArray[1]),
-             float.Parse(sArray[2]));
- 
-         return result;
-     }
-
     // What are the parameters for percepts? Information about the visual field?
     // In that case, this will have to be a vector for the agent's position, and then the unique
     // identifiers of the objects it sees.
@@ -132,7 +150,7 @@ public class BDIAgent : Agent
     {
         _beliefs["position"] = StringToVector3(parameters[0]);
 
-        var visualFieldSize = parameters.Count() - 1;
+        var visualFieldSize = parameters.Count - 1;
         for (int i = 1; i < visualFieldSize; i++) {
             GameObject item = GameObject.Find(parameters[i]);
             _beliefs[item.name] = item.transform.position;
@@ -152,10 +170,9 @@ public class BDIAgent : Agent
         if (_intention == "complete-task" && _plan.Count > 0) // plan in progress
             return;
 
-
         if (_intention == "look-around") {
             _desires.Remove("look-around");
-            if (_beliefs[next_item.name] == _beliefs["destination"]) {
+            if (_beliefs[next_item.GetName()] == _beliefs["destination"]) {
                 _desires.Add("complete-task");
             }
             else {
@@ -181,6 +198,8 @@ public class BDIAgent : Agent
             newIntention = "complete-task";
         else if (_desires.Contains("go-to"))
             newIntention = "go-to";
+        else if (_desires.Contains("look-around"))
+            newIntention = "look-around";
 
         if (newIntention != _intention)
         {
@@ -206,23 +225,29 @@ public class BDIAgent : Agent
                 break;
 
             case "new-task":
-                if (orderedTasks.Count == 0) {
-                        orderedTasks = from entry in _beliefs orderby entry.Value - _beliefs["position"] ascending select entry;
-                }
-                else {
-                    orderedTasks.Remove(orderedTasks.Last());
-                }
-                GameObject nextItem = GameObject.Find(orderedTasks.Last());
-                _beliefs["destination"] = _beliefs[orderedTasks.Last()];
                 _plan.Add($"go-to {_beliefs["destination"]}");
-                _plan.Add($"pick-up {nextItem.name}");
-                _plan.Add($"go-to {nextItem.processPosition}");
-                _plan.Add($"drop {nextItem.name}");
-                _plan.Add($"process {nextItem.name}");
+                _plan.Add($"pick-up {next_item.GetName()}");
+                _plan.Add($"go-to {next_item.GetProcessPosition()}");
+                _plan.Add($"drop {next_item.GetName()}");
+                _plan.Add($"process {next_item.GetName()}");
                 break;
 
             case "go-to":
                 _plan.Add($"go-to {_beliefs["destination"]}");
+                break;
+
+            case "look-around":
+                if (next_item.GetName() == unfinishedTasks[0]) {
+                    foreach (KeyValuePair<string, Vector3> seenItem in _beliefs.OrderBy(pair => TravelEffort(pair.Key)))  
+                    {  
+                        unfinishedTasks.Add(seenItem.Key);
+                    } 
+                }
+                else {
+                    unfinishedTasks.Remove(unfinishedTasks[unfinishedTasks.Count - 1]);
+                }
+                next_item = GameObject.Find(unfinishedTasks[unfinishedTasks.Count - 1]).GetComponent<Item>();
+                _beliefs["destination"] = next_item.GetPosition();
                 break;
 
             default:

@@ -79,8 +79,10 @@
      <Compile Include="Assets/ActressMas/ClientServer/AsyncClientServerLib/AsyncSocketClientHandler.cs" />
      <Compile Include="Assets/ActressMas/Agents/Message.cs" />
      <Compile Include="Assets/ActressMas/ContainerServer/Server.cs" />
-     <Compile Include="Assets/Scripts/BDIAgent.cs" />
      <Compile Include="Assets/Scripts/Item.cs" />
+     <Compile Include="Assets/Scripts/BDIAgent.cs" />
+     <Compile Include="Assets/Hands.cs" />
+     <Compile Include="Assets/ItemHolder.cs" />
      <None Include="Assets/ActressMas/ClientServer/copyright.txt" />
      <None Include="Assets/ActressMas/bin/Release/ActressMas.xml" />
     <Reference Include="UnityEngine">
