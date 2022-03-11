@@ -344,7 +344,7 @@ namespace ActressMas
             // much faster than Enumerable.Range(0, n).OrderBy(x => _rand.Next()).ToArray();
         }
 
-        private void RunTurn(int turn)
+        public void RunTurn(int turn)
         {
             if (!_parallel)
             {

@@ -206,7 +206,7 @@ public class BDIAgent : Agent
             _intention = newIntention;
             _needToReplan = true;
 
-            Debug.Log("Adopting new intention: {_intention}");
+            Debug.Log($"Adopting new intention: {_intention}");
         }
     }
 

@@ -9,7 +9,6 @@ public class Item : MonoBehaviour
     
     private float remaining_time;
 
-    public static string name;
     public static Vector3 processPosition;
 
     private Dictionary<string, Vector3> all_process_positions = new Dictionary<string, Vector3>{{"Item", Vector3.zero}};
@@ -17,8 +16,7 @@ public class Item : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        name = gameObject.name;
-        processPosition = all_process_positions[name];
+        processPosition = all_process_positions[gameObject.name];
     }
 
     public void decrementProcessTime()
@@ -47,7 +45,7 @@ public class Item : MonoBehaviour
 
     public string GetName()
     {
-        return name;
+        return gameObject.name;
     }
 
     public void complete()

@@ -29,8 +29,12 @@ public class Program : MonoBehaviour
     public GameObject agentPrefab;
     public int numberOfAgents;
 
+    public int step;
+
+    private EnvironmentMas env;
+
     void Start() {
-        var env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 250, randomOrder: false, parallel: false);
+        env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 250, randomOrder: false, parallel: false);
 
         for (int i = 0; i < numberOfAgents; i++) {
             
@@ -46,7 +50,12 @@ public class Program : MonoBehaviour
         
         env.Memory.Add("Size", 15);
 
-        env.Start();
+        step = 0;
+    }
+
+    void Update()
+    {
+        env.RunTurn(step++);
     }
 
     public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {

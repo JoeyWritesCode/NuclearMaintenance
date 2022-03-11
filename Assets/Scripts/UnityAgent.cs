@@ -20,16 +20,14 @@ public class UnityAgent : Agent
 
     public GameObject Hands;
 
-    public UnityAgent()
-    {
-        _self = GameObject.Find(Name);
-        position = _self.transform.position;
-        memory = new HashSet<string>();
-    }
 
     public override void Setup()
     {
         Console.WriteLine($"Starting {Name}");
+
+        _self = GameObject.Find(Name);
+        position = _self.transform.position;
+        memory = new HashSet<string>();
 
         _size = Environment.Memory["Size"];
 
