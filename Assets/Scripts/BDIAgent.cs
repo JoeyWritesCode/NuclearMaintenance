@@ -49,11 +49,11 @@ public class BDIAgent : Agent
         _size = Environment.Memory["Size"];
 
         _beliefs["position"] = GameObject.Find(_unity).transform.position;
-        _beliefs["destination"] = _beliefs["position"];
+        _beliefs["destination"] = new Vector3(-1.89f, 2.47f, -2.43f);
 
         // This orchestrates the environment to inform which agent to do which action
         // perhaps we should start with percepts...
-        Send(_unity, "look-around");
+        Send(_unity, $"go-to {_beliefs["destination"]}");
     }
 
     public static Vector3 StringToVector3(string sVector)
@@ -152,14 +152,11 @@ public class BDIAgent : Agent
     // identifiers of the objects it sees.
     private async void BeliefRevision(List<string> parameters)
     {
-        foreach (string p in parameters) {
-            Debug.Log(p);
-        }
+        Debug.Log(parameters.Count);
         
         _beliefs["position"] = StringToVector3(parameters[0] + parameters[1] + parameters[2]);
 
-        var visualFieldSize = parameters.Count - 3;
-        for (int i = 0; i < visualFieldSize; i++) {
+        for (int i = 0; i < parameters.Count - 3; i++) {
             GameObject item = GameObject.Find(parameters[i + 3]);
             _beliefs[item.name] = item.transform.position;
             Debug.Log($"new belief! {item.name} is at {_beliefs[item.name]}");
@@ -259,6 +256,8 @@ public class BDIAgent : Agent
     {
         if (_plan.Count == 0) // plan finished
             _intention = "";
+
+        Debug.Log("Now we execute!");
 
         string action = _plan[0];
         _plan.RemoveAt(0);

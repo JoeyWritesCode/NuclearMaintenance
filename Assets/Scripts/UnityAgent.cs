@@ -73,7 +73,6 @@ public class UnityAgent : Agent
                 case "go-to":
                     NavMeshAgent nmAgent = _self.GetComponent<NavMeshAgent>();
                     nmAgent.SetDestination(StringToVector3(parameters));
-                    UpdateVisualField(message.Sender);
                     break;
 
 /*                 case "enlist":
