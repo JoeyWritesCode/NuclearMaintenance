@@ -10,7 +10,6 @@ using UnityEngine.AI;
 
 public class UnityAgent : Agent
 {
-    private Vector3 position;
     /* private int _turns = 0; */
     private int _size;
 
@@ -26,7 +25,6 @@ public class UnityAgent : Agent
         Console.WriteLine($"Starting {Name}");
 
         _self = GameObject.Find(Name);
-        position = _self.transform.position;
         memory = new HashSet<string>();
 
         _size = Environment.Memory["Size"];
@@ -151,8 +149,9 @@ public class UnityAgent : Agent
         Collider[] hitColliders = Physics.OverlapSphere(position, radius);
         foreach (var hitCollider in hitColliders)
         {
-            if (hitCollider.gameObject.tag == tag && !memory.Contains(hitCollider.gameObject.name)) {
+            if (hitCollider.gameObject.tag == tag) {
                 seenObjects.Add(hitCollider.gameObject.name);
+                memory.Add(hitCollider.gameObject.name);
             }
         }
         
@@ -160,8 +159,9 @@ public class UnityAgent : Agent
     }
 
     private void UpdateVisualField(string sender)
-    {
-        Send(sender, $"percepts {position} {GetObjectsInRange(position, 10.0f, "Item")}");
+    {   
+        Debug.Log(GetObjectsInRange(_self.transform.position, 100.0f, "Item").Count);
+        Send(sender, $"percepts {_self.transform.position} {string.Join(" ", GetObjectsInRange(_self.transform.position, 10.0f, "Item"))}");
     }
 }
 

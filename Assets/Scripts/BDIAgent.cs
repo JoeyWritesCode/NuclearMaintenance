@@ -38,7 +38,8 @@ public class BDIAgent : Agent
         travel_speed = 5.0f;
         process_speed = 5.0f;
 
-        next_item = GameObject.Find(_unity).GetComponent<Item>();
+        next_item = GameObject.Find("Item").GetComponent<Item>();
+        unfinishedTasks = new List<string>();
     }
 
     public override void Setup()
@@ -75,12 +76,16 @@ public class BDIAgent : Agent
     }
 
     public float TravelEffort(string key) {
-        Item item = GameObject.Find(key).GetComponent<Item>();
-        float distance = (item.GetPosition() - _beliefs["position"]).magnitude;
-        distance += (item.GetProcessPosition() - item.GetPosition()).magnitude;
+        Debug.Log($"found {key}");
+        if (key != "position" && key != "destination") {
+            Item item = GameObject.Find(key).GetComponent<Item>();
+            float distance = (item.GetPosition() - _beliefs["position"]).magnitude;
+            distance += (item.GetProcessPosition() - item.GetPosition()).magnitude;
 
-        float time = distance / travel_speed + item.GetRemainingTime() / process_speed;
-        return time;
+            float time = distance / travel_speed + item.GetRemainingTime() / process_speed;
+            return time;
+        }
+        return float.MaxValue;
     }
     
     // This message will be what informs this agent about the actions carried out.
@@ -138,8 +143,7 @@ public class BDIAgent : Agent
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
-            //Debug.Log((ex.ToString()); // for debugging
+            Debug.Log((ex.ToString())); // for debugging
         }
     }
 
@@ -148,17 +152,17 @@ public class BDIAgent : Agent
     // identifiers of the objects it sees.
     private async void BeliefRevision(List<string> parameters)
     {
-        _beliefs["position"] = StringToVector3(parameters[0]);
+        foreach (string p in parameters) {
+            Debug.Log(p);
+        }
+        
+        _beliefs["position"] = StringToVector3(parameters[0] + parameters[1] + parameters[2]);
 
-        var visualFieldSize = parameters.Count - 1;
-        for (int i = 1; i < visualFieldSize; i++) {
-            GameObject item = GameObject.Find(parameters[i]);
+        var visualFieldSize = parameters.Count - 3;
+        for (int i = 0; i < visualFieldSize; i++) {
+            GameObject item = GameObject.Find(parameters[i + 3]);
             _beliefs[item.name] = item.transform.position;
-/* 
-            Vector3 distance = item.processPosition - _beliefs["position"];
-            if (distance < smallest_distance) {
-                next_item = item;
-            } */
+            Debug.Log($"new belief! {item.name} is at {_beliefs[item.name]}");
         }
     }
 
@@ -192,9 +196,7 @@ public class BDIAgent : Agent
     {
         string newIntention = "";
 
-        if (_desires.Contains("new-task"))
-            newIntention = "new-task";
-        else if (_desires.Contains("complete-task"))
+        if (_desires.Contains("complete-task"))
             newIntention = "complete-task";
         else if (_desires.Contains("go-to"))
             newIntention = "go-to";
@@ -224,30 +226,28 @@ public class BDIAgent : Agent
                 _plan.Add("process");
                 break;
 
-            case "new-task":
-                _plan.Add($"go-to {_beliefs["destination"]}");
-                _plan.Add($"pick-up {next_item.GetName()}");
-                _plan.Add($"go-to {next_item.GetProcessPosition()}");
-                _plan.Add($"drop {next_item.GetName()}");
-                _plan.Add($"process {next_item.GetName()}");
-                break;
-
             case "go-to":
                 _plan.Add($"go-to {_beliefs["destination"]}");
                 break;
 
             case "look-around":
-                if (next_item.GetName() == unfinishedTasks[0]) {
+                if (unfinishedTasks.Count == 0) {
                     foreach (KeyValuePair<string, Vector3> seenItem in _beliefs.OrderBy(pair => TravelEffort(pair.Key)))  
                     {  
                         unfinishedTasks.Add(seenItem.Key);
                     } 
                 }
-                else {
-                    unfinishedTasks.Remove(unfinishedTasks[unfinishedTasks.Count - 1]);
-                }
+                Debug.Log("loop done!");
                 next_item = GameObject.Find(unfinishedTasks[unfinishedTasks.Count - 1]).GetComponent<Item>();
+                unfinishedTasks.Remove(unfinishedTasks[unfinishedTasks.Count - 1]);
                 _beliefs["destination"] = next_item.GetPosition();
+                Debug.Log("next item found!");
+
+                _plan.Add($"go-to {_beliefs["destination"]}");
+                _plan.Add($"pick-up {next_item.GetName()}");
+                _plan.Add($"go-to {next_item.GetProcessPosition()}");
+                _plan.Add($"drop {next_item.GetName()}");
+                _plan.Add($"process {next_item.GetName()}");
                 break;
 
             default:
