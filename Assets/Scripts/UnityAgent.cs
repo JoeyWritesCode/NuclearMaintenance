@@ -21,6 +21,8 @@ public class UnityAgent : Agent
 
     public Vector3 destination;
 
+    private float distance_threshold = 1f;
+
 
     public override void Setup()
     {
@@ -38,6 +40,13 @@ public class UnityAgent : Agent
             States[i] = TerrainState.Normal;
 
         position = 0; */
+    }
+
+    void Update()
+    {
+        if (Vector3.Distance(_self.transform.position, destination) <= distance_threshold) {
+            Debug.Log("we're here!");
+        }
     }
 
     public static Vector3 StringToVector3(string sVector)
@@ -73,14 +82,10 @@ public class UnityAgent : Agent
             switch (action)
             {
                 case "go-to":
-                    if (_self.transform.position == destination) {
-                        Debug.Log("we're here!");
-                        Send(message.Sender, "arrived");
-                        break;
-                    }
                     NavMeshAgent nmAgent = _self.GetComponent<NavMeshAgent>();
                     destination = StringToVector3(parameters);
                     nmAgent.SetDestination(destination);
+                    UpdateVisualField(message.Sender);
                     break;
 
 /*                 case "enlist":
@@ -167,7 +172,6 @@ public class UnityAgent : Agent
 
     private void UpdateVisualField(string sender)
     {   
-        Debug.Log(GetObjectsInRange(_self.transform.position, 100.0f, "Item").Count);
         Send(sender, $"percepts {_self.transform.position} {string.Join(" ", GetObjectsInRange(_self.transform.position, 10.0f, "Item"))}");
     }
 }

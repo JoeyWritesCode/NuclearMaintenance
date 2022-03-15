@@ -12,6 +12,7 @@ using UnityEngine.AI;
 public class BDIAgent : Agent
 { 
     private Dictionary<string, Vector3> _beliefs;
+    private Dictionary<string, Vector3> _item_beliefs;
     private HashSet<string> _desires;
     private string _intention; // only 1 intention active in this model
     private List<string> _plan;
@@ -26,12 +27,16 @@ public class BDIAgent : Agent
 
     private List<string> unfinishedTasks;
 
+    public string action;
+
     public BDIAgent(string unityName)
     {
         _beliefs = new Dictionary<string, Vector3>();
+        _item_beliefs = new Dictionary<string, Vector3>();
         _desires = new HashSet<string>();
         _intention = "";
         _plan = new List<string>();
+        action = "";
 
         _unity = unityName;
 
@@ -53,7 +58,13 @@ public class BDIAgent : Agent
 
         // This orchestrates the environment to inform which agent to do which action
         // perhaps we should start with percepts...
+        _intention = "look-around";
+        _plan.Add("look-around");
         Send(_unity, "look-around");
+    }
+
+    void Update() {
+        Debug.Log(action);
     }
 
     public static Vector3 StringToVector3(string sVector)
@@ -76,7 +87,6 @@ public class BDIAgent : Agent
     }
 
     public float TravelEffort(string key) {
-        Debug.Log($"found {key}");
         if (key != "position" && key != "destination") {
             Item item = GameObject.Find(key).GetComponent<Item>();
             float distance = (item.GetPosition() - _beliefs["position"]).magnitude;
@@ -121,17 +131,15 @@ public class BDIAgent : Agent
 
                 case "processing":
                     // could be cool to add something here
-                    GenerateOptions();
-                    FilterDesires();
-                    if (_needToReplan) // if the environment is very dynamic, one can replan after each perception act
-                        MakePlan();
-                    ExecuteAction();
+                    _plan.Add($"process {next_item.GetName()}");
                     break;
 
                 case "arrived":
                     // check if the item is at the location
                     Send(_unity, "look-around");
                     break;
+
+                case "travelling":
 
                 /* case "request-help":
                     // load in relevant information
@@ -151,56 +159,54 @@ public class BDIAgent : Agent
     // In that case, this will have to be a vector for the agent's position, and then the unique
     // identifiers of the objects it sees.
     private async void BeliefRevision(List<string> parameters)
-    {
-        Debug.Log(parameters.Count);
-        
+    {   
         _beliefs["position"] = StringToVector3(parameters[0] + parameters[1] + parameters[2]);
 
         for (int i = 0; i < parameters.Count - 3; i++) {
-            GameObject item = GameObject.Find(parameters[i + 3]);
-            _beliefs[item.name] = item.transform.position;
-            Debug.Log($"new belief! {item.name} is at {_beliefs[item.name]}");
+            if (!_item_beliefs.Contains(parameters[i+3])) {
+                GameObject item = GameObject.Find(parameters[i + 3]);
+                _item_beliefs[item.name] = item.transform.position;
+            }
         }
     }
 
     private void GenerateOptions()
     {
+
+        if (_beliefs["destination"] == Vector3.zero) {
+            _desires.Remove("complete-task");
+        }
+
         if (_desires.Count == 0)
             _desires.Add("look-around");
 
-        if (_intention == "complete-task" && _plan.Count > 0) // plan in progress
+        if (_intention == "complete-task" && _plan.Count > 0) // plan in progress, no change
             return;
 
-        if (_intention == "look-around") {
+        if (_intention == "look-around")
             _desires.Remove("look-around");
-            if (_beliefs[next_item.GetName()] == _beliefs["destination"]) {
-                _desires.Add("complete-task");
-            }
-            else {
-                _desires.Add("new-task");
-            }
-        }
+            _desires.Add("go-to");
 
-        if (_beliefs["position"] == _beliefs["destination"])
-        {
-            // Reached the destination
+        if (_beliefs[next_item.GetName()] == _beliefs["position"]) {
+            // we update percepts upon arriving, so this will check whether the agent can begin a task
             _desires.Remove("go-to");
+            _desires.Add("complete-task");
+        }
+        else {
             _desires.Add("look-around");
         }
-
-        Debug.Log(_desires);
     }
 
     private void FilterDesires()
     {
         string newIntention = "";
 
-        if (_desires.Contains("complete-task"))
-            newIntention = "complete-task";
+        if (_desires.Contains("look-around"))
+            newIntention = "look-around";
         else if (_desires.Contains("go-to"))
             newIntention = "go-to";
-        else if (_desires.Contains("look-around"))
-            newIntention = "look-around";
+        else if (_desires.Contains("complete-task"))
+            newIntention = "complete-task";
 
         if (newIntention != _intention)
         {
@@ -222,7 +228,11 @@ public class BDIAgent : Agent
         switch (_intention)
         {
             case "complete-task":
-                _plan.Add("process");
+
+                _plan.Add($"pick-up {next_item.GetName()}");
+                _plan.Add($"go-to {next_item.GetProcessPosition()}");
+                _plan.Add($"drop {next_item.GetName()}");
+                _plan.Add($"process {next_item.GetName()}");
                 break;
 
             case "go-to":
@@ -230,24 +240,24 @@ public class BDIAgent : Agent
                 break;
 
             case "look-around":
+                // currently will only calculate best new action after exhausting first seen items
                 if (unfinishedTasks.Count == 0) {
-                    foreach (KeyValuePair<string, Vector3> seenItem in _beliefs.OrderBy(pair => TravelEffort(pair.Key)))  
+                    // annoying way to do it...
+                    Dictionary<string, Vector3> withoutPosition = _beliefs.Remove("position");
+                    Dictionary<string, Vector3> itemBeliefs = withoutPosition.Remove("destination");
+                    foreach (KeyValuePair<string, Vector3> seenItem in itemBeliefs.OrderBy(pair => TravelEffort(pair.Key)))  
                     {  
+                        Debug.Log($"adding {seenItem.Key}");
                         unfinishedTasks.Add(seenItem.Key);
                     } 
                 }
-                Debug.Log($"loop done! {unfinishedTasks[0]}");
+                Debug.Log(unfinishedTasks[0]);
                 next_item = GameObject.Find(unfinishedTasks[0]).GetComponent<Item>();
-                Debug.Log($"next item is {next_item.name}");
-                unfinishedTasks.Remove(unfinishedTasks[unfinishedTasks.Count - 1]);
+                unfinishedTasks.Remove(unfinishedTasks[0]);
                 _beliefs["destination"] = next_item.GetPosition();
-                Debug.Log("next item found!");
+                Debug.Log($"next item is {next_item.GetName()}");
 
                 _plan.Add($"go-to {_beliefs["destination"]}");
-                _plan.Add($"pick-up {next_item.GetName()}");
-                _plan.Add($"go-to {next_item.GetProcessPosition()}");
-                _plan.Add($"drop {next_item.GetName()}");
-                _plan.Add($"process {next_item.GetName()}");
                 break;
 
             default:
@@ -257,15 +267,15 @@ public class BDIAgent : Agent
 
     private void ExecuteAction()
     {
-        if (_plan.Count == 0) // plan finished
+        if (_plan.Count == 0) { // plan finished
             _intention = "";
-
-        Debug.Log("Now we execute!");
-
-        string action = _plan[0];
-        _plan.RemoveAt(0);
-
-        Send(_unity, action);
+            Send(_unity, "look-around");
+        }
+        else {
+            action = _plan[0];
+            _plan.RemoveAt(0);
+            Send(_unity, action);
+        }
     }
 }
 
