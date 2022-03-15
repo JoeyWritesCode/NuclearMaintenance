@@ -12,7 +12,6 @@ using UnityEngine.AI;
 public class BDIAgent : Agent
 { 
     private Dictionary<string, Vector3> _beliefs;
-    private Dictionary<string, Vector3> _item_beliefs;
     private HashSet<string> _desires;
     private string _intention; // only 1 intention active in this model
     private List<string> _plan;
@@ -27,16 +26,15 @@ public class BDIAgent : Agent
 
     private List<string> unfinishedTasks;
 
-    public string action;
+    public Vector3 destination;
+    public Vector3 position;
 
     public BDIAgent(string unityName)
     {
         _beliefs = new Dictionary<string, Vector3>();
-        _item_beliefs = new Dictionary<string, Vector3>();
         _desires = new HashSet<string>();
         _intention = "";
         _plan = new List<string>();
-        action = "";
 
         _unity = unityName;
 
@@ -53,18 +51,13 @@ public class BDIAgent : Agent
 
         _size = Environment.Memory["Size"];
 
-        _beliefs["position"] = GameObject.Find(_unity).transform.position;
-        _beliefs["destination"] = new Vector3(-1.89f, 2.47f, -2.43f);
+        position = GameObject.Find(_unity).transform.position;
+        destination = new Vector3(-1.89f, 2.47f, -2.43f);
 
         // This orchestrates the environment to inform which agent to do which action
         // perhaps we should start with percepts...
         _intention = "look-around";
-        _plan.Add("look-around");
         Send(_unity, "look-around");
-    }
-
-    void Update() {
-        Debug.Log(action);
     }
 
     public static Vector3 StringToVector3(string sVector)
@@ -160,18 +153,22 @@ public class BDIAgent : Agent
     // identifiers of the objects it sees.
     private async void BeliefRevision(List<string> parameters)
     {   
-        _beliefs["position"] = StringToVector3(parameters[0] + parameters[1] + parameters[2]);
+        position = StringToVector3(parameters[0] + parameters[1] + parameters[2]);
 
         for (int i = 0; i < parameters.Count - 3; i++) {
-            if (!_item_beliefs.Contains(parameters[i+3])) {
-                GameObject item = GameObject.Find(parameters[i + 3]);
-                _item_beliefs[item.name] = item.transform.position;
-            }
+            GameObject item = GameObject.Find(parameters[i + 3]);
+            beliefs[item.name] = item.transform.position;
         }
     }
 
     private void GenerateOptions()
     {
+
+        // determine distances to each object
+        // determine distances from object to process location 
+        // determine time to process 
+        // sum up
+        // pick best
 
         if (_beliefs["destination"] == Vector3.zero) {
             _desires.Remove("complete-task");

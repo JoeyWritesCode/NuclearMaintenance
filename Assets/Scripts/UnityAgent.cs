@@ -21,7 +21,8 @@ public class UnityAgent : Agent
 
     public Vector3 destination;
 
-    private float distance_threshold = 1f;
+    private float distanceThreshold = 1f;
+    private float visualFieldDistance = 1f;
 
 
     public override void Setup()
@@ -44,7 +45,7 @@ public class UnityAgent : Agent
 
     void Update()
     {
-        if (Vector3.Distance(_self.transform.position, destination) <= distance_threshold) {
+        if (Vector3.Distance(_self.transform.position, destination) <= distanceThreshold) {
             Debug.Log("we're here!");
         }
     }
@@ -91,7 +92,7 @@ public class UnityAgent : Agent
 /*                 case "enlist":
                     var worker_counter = 0;
                     while (worker_counter < parameters[1]) {
-                        foreach (string name in GetObjectsInRange(position, 10.0f, "Agent")) {
+                        foreach (string name in GetObjectNamesInRange(position, 10.0f, "Agent")) {
                             string manager = GameObject.Find(name)._manager;
                             Send(manager, "request-help");
                             worker_counter++;
@@ -114,7 +115,7 @@ public class UnityAgent : Agent
                     break;
 
                 case "look-around":
-                    UpdateVisualField(message.Sender);
+                    UpdateVisualField(message.Sender, false);
                     break;
 
                 default:
@@ -154,7 +155,7 @@ public class UnityAgent : Agent
         }
     }
 
-    private List<string> GetObjectsInRange(Vector3 position, float radius, string tag)
+    private List<string> GetObjectNamesInRange(Vector3 position, float radius, string tag)
     {
         List<string> seenObjects = new List<string>();
 
@@ -163,16 +164,17 @@ public class UnityAgent : Agent
         {
             if (hitCollider.gameObject.tag == tag) {
                 seenObjects.Add(hitCollider.gameObject.name);
-                memory.Add(hitCollider.gameObject.name);
             }
         }
-        
         return seenObjects;
     }
 
-    private void UpdateVisualField(string sender)
+    private void UpdateVisualField(string sender, bool isGlance)
     {   
-        Send(sender, $"percepts {_self.transform.position} {string.Join(" ", GetObjectsInRange(_self.transform.position, 10.0f, "Item"))}");
+        if (isGlance)
+            Send(sender, $"glance {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
+        else
+            Send(sender, $"percepts {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
     }
 }
 
