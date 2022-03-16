@@ -14,6 +14,7 @@ public class UnityAgent : Agent
     private int _size;
 
     private GameObject _self;
+    private NavMeshAgent nmAgent;
 
     private HashSet<string> memory;
 
@@ -33,14 +34,7 @@ public class UnityAgent : Agent
         memory = new HashSet<string>();
 
         _size = Environment.Memory["Size"];
-
-/*         States = new TerrainState[_size];
-        States[0] = TerrainState.Water;
-
-        for (int i = 1; i < _size; i++)
-            States[i] = TerrainState.Normal;
-
-        position = 0; */
+        nmAgent = _self.GetComponent<NavMeshAgent>();
     }
 
     void Update()
@@ -76,31 +70,12 @@ public class UnityAgent : Agent
             Console.WriteLine($"\t{message.Format()}");
             message.Parse(out string action, out string parameters);
 
-            /* for (int i = 0; i < States.Length; i++)
-                if (States[i] == TerrainState.GettingWater)
-                    States[i] = TerrainState.Water; */
-
             switch (action)
             {
                 case "go-to":
-                    NavMeshAgent nmAgent = _self.GetComponent<NavMeshAgent>();
                     destination = StringToVector3(parameters);
                     nmAgent.SetDestination(destination);
-                    UpdateVisualField(message.Sender);
                     break;
-
-/*                 case "enlist":
-                    var worker_counter = 0;
-                    while (worker_counter < parameters[1]) {
-                        foreach (string name in GetObjectNamesInRange(position, 10.0f, "Agent")) {
-                            string manager = GameObject.Find(name)._manager;
-                            Send(manager, "request-help");
-                            worker_counter++;
-                        }
-                        worker_counter = parameters[1];
-                    }
-                    UpdateVisualField(message.Sender);
-                    break; */
 
                 case "pick-up":
                     pickUp(parameters);
@@ -115,7 +90,11 @@ public class UnityAgent : Agent
                     break;
 
                 case "look-around":
-                    UpdateVisualField(message.Sender, false);
+                    if (nmAgent.transform.position == destination) {
+                        Send(message.Sender, "arrived");
+                    }
+                    else;
+                        UpdateVisualField(message.Sender);
                     break;
 
                 default:
@@ -169,13 +148,10 @@ public class UnityAgent : Agent
         return seenObjects;
     }
 
-    private void UpdateVisualField(string sender, bool isGlance)
+    private void UpdateVisualField(string sender)
     {   
-        if (isGlance)
-            Send(sender, $"glance {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
-        else
-            Send(sender, $"percepts {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
-    }
+        Send(sender, $"travelling {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
+    }  
 }
 
 

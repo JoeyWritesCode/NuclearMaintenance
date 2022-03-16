@@ -5,9 +5,10 @@ using UnityEngine;
 public class Item : MonoBehaviour
 {
     private static  Dictionary<string, float> itemMaintences;
-    private static float days_per_step = 0.2F;
     
+    public int time_spent_waiting;
     private float remaining_time;
+    private float days_per_step = 0.2f;
 
     public static Vector3 processPosition;
 
@@ -17,6 +18,11 @@ public class Item : MonoBehaviour
     void Start()
     {
         processPosition = all_process_positions[gameObject.name];
+    }
+
+    void Update()
+    {
+        time_spent_waiting++;
     }
 
     public void decrementProcessTime()
@@ -33,6 +39,10 @@ public class Item : MonoBehaviour
     {
         return remaining_time;
     }
+    public int GetTimeSpentWaiting()
+    {
+        return time_spent_waiting;
+    }
 
     public Vector3 GetPosition()
     {
@@ -41,6 +51,10 @@ public class Item : MonoBehaviour
     public Vector3 GetProcessPosition()
     {
         return processPosition;
+    }
+    public bool inProcessPosition()
+    {
+        return gameObject.transform.position == processPosition;
     }
 
     public string GetName()
