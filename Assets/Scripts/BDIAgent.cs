@@ -169,11 +169,11 @@ public class BDIAgent : Agent
 
     private void GenerateOptions()
     {
-        List<string> availableTasks = new List<string>(_beliefs.Keys);
-        availableTasks.OrderBy(name => TravelEffort(name));
-
         //if (availableTasks.First() != next_item.GetName()) {
         if (next_item == null) {
+            List<string> availableTasks = new List<string>(_beliefs.Keys);
+            availableTasks.OrderBy(name => TravelEffort(name));
+
             Debug.Log($"let's go get that {availableTasks.First()}");
             next_item = GameObject.Find(availableTasks.First()).GetComponent<Item>();
             availableTasks.RemoveAt(0);
@@ -185,9 +185,16 @@ public class BDIAgent : Agent
                 destination = next_item.GetPosition();
         }
         else {
-            Debug.Log("Let's get to it!");
-            _desires.Remove("go-to");
-            _desires.Add("complete-task");
+            if (next_item.inProcessPosition()) {
+                _desires.Remove("go-to");
+                _desires.Remove("complete-task");
+                _desires.Add("process");
+            }
+            else {
+                Debug.Log("Let's get to it!");
+                _desires.Remove("go-to");
+                _desires.Add("complete-task");
+            }
         }
     }
 
@@ -198,6 +205,8 @@ public class BDIAgent : Agent
 
         if (_desires.Contains("go-to"))
             newIntention = "go-to";
+        else if (_desires.Contains("process"))
+            newIntention = "process";
         else if (_desires.Contains("complete-task"))
             newIntention = "complete-task";
 
@@ -224,11 +233,14 @@ public class BDIAgent : Agent
                 _plan.Add($"pick-up {next_item.GetName()}");
                 _plan.Add($"go-to {next_item.GetProcessPosition()}");
                 _plan.Add($"drop {next_item.GetName()}");
-                _plan.Add($"process {next_item.GetName()}");
                 break;
 
             case "go-to":
                 _plan.Add($"go-to {destination}");
+                break;
+
+            case "process":
+                _plan.Add($"process {next_item.GetName()}");
                 break;
 
             default:

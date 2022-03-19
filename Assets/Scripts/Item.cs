@@ -7,14 +7,15 @@ public class Item : MonoBehaviour
     private static  Dictionary<string, float> itemMaintences;
     
     public int time_spent_waiting;
-    private float remaining_time;
+    private float remaining_time = 5;
     private float days_per_step = 0.2f;
+    private float distance_threshold = 1.0f;
 
     public static Vector3 processPosition;
 
     private Dictionary<string, Vector3> all_process_positions = new Dictionary<string, Vector3>{
-        {"Item", Vector3.zero},
-        {"AlsoAnItem", Vector3.zero}
+        {"Item", new Vector3(0f, 2.5f, 0f)},
+        {"AlsoAnItem", new Vector3(0f, 2.5f, 0f)}
         };
 
     // Start is called before the first frame update
@@ -57,7 +58,7 @@ public class Item : MonoBehaviour
     }
     public bool inProcessPosition()
     {
-        return gameObject.transform.position == processPosition;
+        return (processPosition - gameObject.transform.position).magnitude <= distance_threshold;
     }
 
     public string GetName()
