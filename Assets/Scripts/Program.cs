@@ -34,7 +34,7 @@ public class Program : MonoBehaviour
     private EnvironmentMas env;
 
     void Start() {
-        env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 250, randomOrder: false, parallel: false);
+        env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 50, randomOrder: false, parallel: false);
 
         for (int i = 0; i < numberOfAgents; i++) {
             
@@ -43,6 +43,7 @@ public class Program : MonoBehaviour
 
             var unityAgent = new UnityAgent();
             unityAgent._bdi = "bdi_" + i;
+            agentObject.GetComponent<AgentHandler>().SetAgent(unityAgent);
             env.Add(unityAgent, agentObject.name);
             
             var bdiAgent = new BDIAgent(agentObject.name);

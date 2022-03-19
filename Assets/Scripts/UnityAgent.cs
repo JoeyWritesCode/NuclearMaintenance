@@ -77,6 +77,16 @@ public class UnityAgent : Agent
                 case "go-to":
                     destination = StringToVector3(parameters);
                     nmAgent.SetDestination(destination);
+                    Send(message.Sender, "travelling");
+                    break;
+
+                case "waiting":
+                    float distance = (destination - nmAgent.transform.position).magnitude;
+                    if (distance <= distanceThreshold) {
+                        UpdateVisualField(message.Sender, "arrived");
+                    }
+                    else;
+                        Send(message.Sender, "travelling");
                     break;
 
                 case "pick-up":
@@ -89,14 +99,6 @@ public class UnityAgent : Agent
 
                 case "process":
                     executeTask(parameters, message.Sender);
-                    break;
-
-                case "look-around":
-                    if (nmAgent.transform.position == destination) {
-                        Send(message.Sender, "arrived");
-                    }
-                    else;
-                        UpdateVisualField(message.Sender);
                     break;
 
                 default:
@@ -150,9 +152,9 @@ public class UnityAgent : Agent
         return seenObjects;
     }
 
-    private void UpdateVisualField(string sender)
+    private void UpdateVisualField(string sender, string command)
     {   
-        Send(sender, $"travelling {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
+        Send(sender, $"{command} {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
     }  
 }
 

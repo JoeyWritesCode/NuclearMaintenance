@@ -109,11 +109,13 @@ public class BDIAgent : Agent
                     break;
 
                 case "travelling":
+                    Send(message.Sender, "waiting");
                     break;
 
                 case "task-completed":
                     _beliefs.Remove(next_item.GetName());
                     next_item = null;
+                    BeliefRevision(parameters);
                     GenerateOptions();
                     FilterDesires();
                     if (_needToReplan) // if the environment is very dynamic, one can replan after each perception act
@@ -237,6 +239,7 @@ public class BDIAgent : Agent
     private void ExecuteAction()
     {
         if (_plan.Count == 0) { // plan finished
+            Debug.Log("plan is finished!");
             _intention = "";
             Send(_unity, "look-around");
         }

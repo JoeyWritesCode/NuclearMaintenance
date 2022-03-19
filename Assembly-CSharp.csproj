@@ -83,6 +83,7 @@
      <Compile Include="Assets/ActressMas/ContainerServer/Server.cs" />
      <Compile Include="Assets/Scripts/Item.cs" />
      <Compile Include="Assets/Scripts/BDIAgent.cs" />
+     <Compile Include="Assets/Scripts/AgentHandler.cs" />
      <None Include="Assets/ActressMas/ClientServer/copyright.txt" />
      <None Include="Assets/ActressMas/bin/Release/ActressMas.xml" />
     <Reference Include="UnityEngine">
