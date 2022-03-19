@@ -42,6 +42,7 @@ public class Program : MonoBehaviour
             agentObject.name = "unity_" + i;
 
             var unityAgent = new UnityAgent();
+            unityAgent._bdi = "bdi_" + i;
             env.Add(unityAgent, agentObject.name);
             
             var bdiAgent = new BDIAgent(agentObject.name);
@@ -68,13 +69,5 @@ public class Program : MonoBehaviour
         NavMesh.SamplePosition(randomPos, out hit, maxDistance, NavMesh.AllAreas);
 
         return hit.position;
-    }
-}
-
-public class MonitorAgent : Agent
-{
-    public override void Act(Message m)
-    {
-        Debug.Log($"{Name} has received {m.Format()}");
     }
 }

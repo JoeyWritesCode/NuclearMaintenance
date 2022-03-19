@@ -12,7 +12,10 @@ public class Item : MonoBehaviour
 
     public static Vector3 processPosition;
 
-    private Dictionary<string, Vector3> all_process_positions = new Dictionary<string, Vector3>{{"Item", Vector3.zero}};
+    private Dictionary<string, Vector3> all_process_positions = new Dictionary<string, Vector3>{
+        {"Item", Vector3.zero},
+        {"AlsoAnItem", Vector3.zero}
+        };
 
     // Start is called before the first frame update
     void Start()

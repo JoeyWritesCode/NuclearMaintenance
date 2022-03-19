@@ -42,7 +42,6 @@ public class BDIAgent : Agent
         travel_speed = 5.0f;
         process_speed = 5.0f;
 
-        next_item = GameObject.Find("Item").GetComponent<Item>();
         availableTasks = new List<string>();
     }
 
@@ -53,11 +52,8 @@ public class BDIAgent : Agent
         _size = Environment.Memory["Size"];
 
         position = GameObject.Find(_unity).transform.position;
-        destination = new Vector3(-1.89f, 2.47f, -2.43f);
+        destination = Vector3.zero;
 
-        // This orchestrates the environment to inform which agent to do which action
-        // perhaps we should start with percepts...
-        Send(_unity, "look-around");
     }
 
     public static Vector3 StringToVector3(string sVector)
@@ -103,9 +99,16 @@ public class BDIAgent : Agent
 
             switch (action)
             {
-                case "travelling":
+                case "start":
                     BeliefRevision(parameters);
-                    Send(message.Sender, "look-around");
+                    GenerateOptions();
+                    FilterDesires();
+                    if (_needToReplan) // if the environment is very dynamic, one can replan after each perception act
+                        MakePlan();
+                    ExecuteAction();
+                    break;
+
+                case "travelling":
                     break;
 
                 case "task-completed":
@@ -127,6 +130,7 @@ public class BDIAgent : Agent
                     // check if the item is at the location
                     // if it is, complete the task
                     // otherwise, generate options
+                    BeliefRevision(parameters);
                     GenerateOptions();
                     FilterDesires();
                     if (_needToReplan) // if the environment is very dynamic, one can replan after each perception act
@@ -148,12 +152,16 @@ public class BDIAgent : Agent
     // In that case, this will have to be a vector for the agent's position, and then the unique
     // identifiers of the objects it sees.
     private async void BeliefRevision(List<string> parameters)
-    {   
+    {    
         position = StringToVector3(parameters[0] + parameters[1] + parameters[2]);
 
-        for (int i = 0; i < parameters.Count - 3; i++) {
-            GameObject item = GameObject.Find(parameters[i + 3]);
-            _beliefs[item.name] = item.transform.position;
+        List<string> seenObjects = parameters.GetRange(3, parameters.Count - 3);
+        if (seenObjects.Count > 0) {
+            foreach (string name in seenObjects) {
+                //Debug.Log(name);
+                GameObject item = GameObject.Find(name);
+                _beliefs[item.name] = item.transform.position;
+            }
         }
     }
 
@@ -162,9 +170,12 @@ public class BDIAgent : Agent
         List<string> availableTasks = new List<string>(_beliefs.Keys);
         availableTasks.OrderBy(name => TravelEffort(name));
 
-        if (availableTasks.First() != next_item.GetName()) {
+        //if (availableTasks.First() != next_item.GetName()) {
+        if (next_item == null) {
+            Debug.Log($"let's go get that {availableTasks.First()}");
             next_item = GameObject.Find(availableTasks.First()).GetComponent<Item>();
             availableTasks.RemoveAt(0);
+
             _desires.Add("go-to");
             if (next_item.inProcessPosition())
                 destination = next_item.GetProcessPosition();
@@ -172,6 +183,7 @@ public class BDIAgent : Agent
                 destination = next_item.GetPosition();
         }
         else {
+            Debug.Log("Let's get to it!");
             _desires.Remove("go-to");
             _desires.Add("complete-task");
         }
@@ -179,6 +191,7 @@ public class BDIAgent : Agent
 
     private void FilterDesires()
     {
+        // This function determines whether desire(X, D) and belief(X, Z) hold, if so return intention(X, Y)
         string newIntention = "";
 
         if (_desires.Contains("go-to"))
@@ -230,6 +243,7 @@ public class BDIAgent : Agent
         else {
             action = _plan[0];
             _plan.RemoveAt(0);
+            Debug.Log(action);
             Send(_unity, action);
         }
     }

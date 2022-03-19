@@ -38,6 +38,7 @@
   <ItemGroup>
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/SSLSocket.cs" />
      <Compile Include="Assets/ActressMas/Agents/EnvironmentMas.cs" />
+     <Compile Include="Assets/Hands.cs" />
      <Compile Include="Assets/ActressMas/ContainerServer/Container.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/ClientInfoList.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/AsyncClientServerLib/AsyncSocketClientHandlerReceiveQueue.cs" />
@@ -45,6 +46,7 @@
      <Compile Include="Assets/ActressMas/ClientServer/AsyncClientServerLib/BasicHeader.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractSocketServer.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/MessageException.cs" />
+     <Compile Include="Assets/ItemHolder.cs" />
      <Compile Include="Assets/ActressMas/ContainerServer/ContainerMessage.cs" />
      <Compile Include="Assets/ActressMas/Info.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractMessageHeader.cs" />
@@ -81,8 +83,6 @@
      <Compile Include="Assets/ActressMas/ContainerServer/Server.cs" />
      <Compile Include="Assets/Scripts/Item.cs" />
      <Compile Include="Assets/Scripts/BDIAgent.cs" />
-     <Compile Include="Assets/Hands.cs" />
-     <Compile Include="Assets/ItemHolder.cs" />
      <None Include="Assets/ActressMas/ClientServer/copyright.txt" />
      <None Include="Assets/ActressMas/bin/Release/ActressMas.xml" />
     <Reference Include="UnityEngine">
@@ -693,13 +693,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="NavMeshComponents.csproj">
-      <Project>{d88ad470-e73f-84fd-babd-9b5c0aa04dc8}</Project>
-      <Name>NavMeshComponents</Name>
-    </ProjectReference>
     <ProjectReference Include="NavMeshComponentsEditor.csproj">
       <Project>{9577437f-0311-e3f1-677f-e8cafc435863}</Project>
       <Name>NavMeshComponentsEditor</Name>
+    </ProjectReference>
+    <ProjectReference Include="NavMeshComponents.csproj">
+      <Project>{d88ad470-e73f-84fd-babd-9b5c0aa04dc8}</Project>
+      <Name>NavMeshComponents</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

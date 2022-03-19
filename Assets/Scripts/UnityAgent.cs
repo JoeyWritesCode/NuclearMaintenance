@@ -22,8 +22,10 @@ public class UnityAgent : Agent
 
     public Vector3 destination;
 
-    private float distanceThreshold = 1f;
-    private float visualFieldDistance = 1f;
+    public string _bdi;
+
+    private float distanceThreshold = 0.1f;
+    private float visualFieldDistance = 10f;
 
 
     public override void Setup()
@@ -35,13 +37,13 @@ public class UnityAgent : Agent
 
         _size = Environment.Memory["Size"];
         nmAgent = _self.GetComponent<NavMeshAgent>();
+
+        Send(_bdi, $"start {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
     }
 
     void Update()
     {
-        if (Vector3.Distance(_self.transform.position, destination) <= distanceThreshold) {
-            Debug.Log("we're here!");
-        }
+        Debug.Log(destination);
     }
 
     public static Vector3 StringToVector3(string sVector)
