@@ -125,7 +125,8 @@ public class BDIAgent : Agent
 
                 case "processing":
                     // could be cool to add something here
-                    Send(message.Sender, $"process {next_item.GetName()}");
+                    _plan.Add($"process {next_item.GetName()}");
+                    ExecuteAction();
                     break;
 
                 case "arrived":
