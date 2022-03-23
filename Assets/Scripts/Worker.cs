@@ -33,9 +33,9 @@ public class Worker : MonoBehaviour
 
     /* ------------------------------------ The Worker parameters ----------------------------------- */
     private float visionDistance = 10.0f;
-    private float grabDistance = 1.0f;
+    private float grabDistance = 0.25f;
     private float travelSpeed = 5.0f;
-    private float processSpeed = 5.0f;
+    private float processSpeed = 1.0f;
 
     /* ---------------------------------- The next associated item ---------------------------------- */
     private Item nextItem;
@@ -149,10 +149,8 @@ public class Worker : MonoBehaviour
                 Debug.Log($"We're on our way to {nextItem.GetPosition()} to {nextAction} {nextItem.GetName()}");
                 
                 CollectItem();
-                if (isCarrying)
+                if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= grabDistance)
                     nmAgent.SetDestination(nextItem.GetProcessPosition());
-
-                    isCarrying = false;
                     nextAction = "deliver";
                 break;
 
@@ -160,10 +158,10 @@ public class Worker : MonoBehaviour
                 Debug.Log($"We're on our way to {nextItem.GetProcessPosition()} to {nextAction} {nextItem.GetName()}");
                 DeliverItem();
         
-                if (delivered)
+                if ((nextItem.GetProcessPosition() - gameObject.transform.position).magnitude <= nextItem.distance_threshold)
                     Debug.Log($"We have delivered {nextItem.GetName()}");
                     
-                    nextItem = null;
+                    //nextItem = null;
                     delivered = false;
                     nextAction = "decide";
                 break;

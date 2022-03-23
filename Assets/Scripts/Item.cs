@@ -9,7 +9,7 @@ public class Item : MonoBehaviour
     public int time_spent_waiting;
     private float remaining_time = 5;
     private float days_per_step = 0.2f;
-    public float distance_threshold = 1.5f;
+    public float distance_threshold = 3.0f;
 
     public static Vector3 processPosition;
 
