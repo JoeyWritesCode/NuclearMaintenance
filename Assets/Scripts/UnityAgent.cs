@@ -24,7 +24,7 @@ public class UnityAgent : Agent
 
     public string _bdi;
 
-    private float distanceThreshold = 0.1f;
+    private float distanceThreshold = 0.7f;
     private float visualFieldDistance = 10f;
 
 
@@ -77,13 +77,15 @@ public class UnityAgent : Agent
                 case "go-to":
                     destination = StringToVector3(parameters);
                     nmAgent.SetDestination(destination);
+                    Debug.Log($"I'm on my way to {destination}");
                     Send(message.Sender, "travelling");
                     break;
 
                 case "waiting":
                     float distance = (destination - nmAgent.transform.position).magnitude;
+                    Debug.Log($"The agent is {distance} away from the destination");
                     if (distance <= distanceThreshold) {
-                        UpdateVisualField(message.Sender, "arrived");
+                        UpdateVisualField(message.Sender, "start");
                     }
                     else;
                         Send(message.Sender, "travelling");
@@ -99,6 +101,10 @@ public class UnityAgent : Agent
 
                 case "process":
                     executeTask(parameters, message.Sender);
+                    break;
+
+                case "look-around":
+                    Send(message.Sender, $"start {_self.transform.position} {string.Join(" ", GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item"))}");
                     break;
 
                 default:
@@ -130,7 +136,10 @@ public class UnityAgent : Agent
         Item item = GameObject.Find(itemName).GetComponent<Item>();
         if (item.isProcessed()) {
             item.complete();
-            Send(sender, $"task-completed {itemName}");
+            List<string> seenObjects = GetObjectNamesInRange(_self.transform.position, visualFieldDistance, "Item");
+            seenObjects.Remove(itemName);
+            Send(sender, $"task-completed {_self.transform.position} {string.Join(" ", seenObjects)}");
+            //UpdateVisualField(sender, "task-completed");
         }
         else {
             item.decrementProcessTime();

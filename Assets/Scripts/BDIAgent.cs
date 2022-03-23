@@ -14,6 +14,7 @@ public class BDIAgent : Agent
     private Dictionary<string, Vector3> _beliefs;
     private HashSet<string> _desires;
     private string _intention; // only 1 intention active in this model
+    private string newIntention;
     private List<string> _plan;
     private bool _needToReplan;
     private int _size;
@@ -29,6 +30,8 @@ public class BDIAgent : Agent
     public Vector3 destination;
     public Vector3 position;
     public string action;
+
+    private float distance_threshold = 1.0f;
 
     public BDIAgent(string unityName)
     {
@@ -100,6 +103,7 @@ public class BDIAgent : Agent
             switch (action)
             {
                 case "start":
+                    Debug.Log("let's have a looksie");
                     BeliefRevision(parameters);
                     GenerateOptions();
                     FilterDesires();
@@ -113,7 +117,7 @@ public class BDIAgent : Agent
                     break;
 
                 case "task-completed":
-                    _beliefs.Remove(next_item.GetName());
+                    //_beliefs.Remove(next_item.GetName());
                     next_item = null;
                     BeliefRevision(parameters);
                     GenerateOptions();
@@ -171,30 +175,31 @@ public class BDIAgent : Agent
     private void GenerateOptions()
     {
         //if (availableTasks.First() != next_item.GetName()) {
+        if (_intention == "go-to" && (destination - position).magnitude > distance_threshold)
+            return;
+
         if (next_item == null) {
+            //_desires.Remove("complete-task");
+            //_desires.Remove("process");
+
             List<string> availableTasks = new List<string>(_beliefs.Keys);
             availableTasks.OrderBy(name => TravelEffort(name));
 
-            Debug.Log($"let's go get that {availableTasks.First()}");
-            next_item = GameObject.Find(availableTasks.First()).GetComponent<Item>();
-            availableTasks.RemoveAt(0);
+            Debug.Log($"let's go get that {availableTasks.Last()}");
+            next_item = GameObject.Find(availableTasks.Last()).GetComponent<Item>();
 
-            _desires.Add("go-to");
-            if (next_item.inProcessPosition())
-                destination = next_item.GetProcessPosition();
-            else
-                destination = next_item.GetPosition();
+            destination = next_item.GetPosition();
+            //_desires.Add("go-to");
+            newIntention = "go-to";
         }
         else {
-            if (next_item.inProcessPosition()) {
-                _desires.Remove("go-to");
-                _desires.Remove("complete-task");
-                _desires.Add("process");
-            }
+            if (next_item.inProcessPosition())
+                newIntention = "process";
             else {
-                Debug.Log("Let's get to it!");
-                _desires.Remove("go-to");
-                _desires.Add("complete-task");
+                //_desires.Remove("go-to");
+                Debug.Log("Let's get this to it's process position!");
+                //_desires.Add("complete-task");
+                newIntention = "complete-task";
             }
         }
     }
@@ -202,15 +207,6 @@ public class BDIAgent : Agent
     private void FilterDesires()
     {
         // This function determines whether desire(X, D) and belief(X, Z) hold, if so return intention(X, Y)
-        string newIntention = "";
-
-        if (_desires.Contains("go-to"))
-            newIntention = "go-to";
-        else if (_desires.Contains("process"))
-            newIntention = "process";
-        else if (_desires.Contains("complete-task"))
-            newIntention = "complete-task";
-
         if (newIntention != _intention)
         {
             _intention = newIntention;
@@ -233,7 +229,6 @@ public class BDIAgent : Agent
             case "complete-task":
                 _plan.Add($"pick-up {next_item.GetName()}");
                 _plan.Add($"go-to {next_item.GetProcessPosition()}");
-                _plan.Add($"drop {next_item.GetName()}");
                 break;
 
             case "go-to":
@@ -241,6 +236,7 @@ public class BDIAgent : Agent
                 break;
 
             case "process":
+                _plan.Add($"drop {next_item.GetName()}");
                 _plan.Add($"process {next_item.GetName()}");
                 break;
 
@@ -251,17 +247,18 @@ public class BDIAgent : Agent
 
     private void ExecuteAction()
     {
-        if (_plan.Count == 0) { // plan finished
+        if (_plan.Count == 1) { // plan finished
             Debug.Log("plan is finished!");
-            _intention = "";
-            Send(_unity, "look-around");
+            _plan.Add(_plan.Last());
+           /*  if (_intention == "go-to")
+                Send(_unity, "waiting");
+            else
+                Send(_unity, "start"); */
         }
-        else {
-            action = _plan[0];
-            _plan.RemoveAt(0);
-            Debug.Log(action);
-            Send(_unity, action);
-        }
+        action = _plan[0];
+        _plan.RemoveAt(0);
+        Debug.Log($"Hello! I will now {action}, because I want to {_intention}");
+        Send(_unity, action);
     }
 }
 
