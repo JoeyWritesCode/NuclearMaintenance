@@ -117,7 +117,7 @@ public class BDIAgent : Agent
                     break;
 
                 case "task-completed":
-                    //_beliefs.Remove(next_item.GetName());
+                    _beliefs.Remove(next_item.GetName());
                     next_item = null;
                     BeliefRevision(parameters);
                     GenerateOptions();
@@ -185,12 +185,17 @@ public class BDIAgent : Agent
             List<string> availableTasks = new List<string>(_beliefs.Keys);
             availableTasks.OrderBy(name => TravelEffort(name));
 
-            Debug.Log($"let's go get that {availableTasks.Last()}");
-            next_item = GameObject.Find(availableTasks.Last()).GetComponent<Item>();
+            try {
+                Debug.Log($"let's go get that {availableTasks.Last()}");
+                next_item = GameObject.Find(availableTasks.Last()).GetComponent<Item>();
 
-            destination = next_item.GetPosition();
-            //_desires.Add("go-to");
+                destination = next_item.GetPosition();
+            }
+            catch (Exception ex) {
+                destination = GetRandomPoint(position, 5.0f);
+            }
             newIntention = "go-to";
+
         }
         else {
             if (next_item.inProcessPosition())
@@ -213,6 +218,9 @@ public class BDIAgent : Agent
             _needToReplan = true;
 
             Debug.Log($"Adopting new intention: {_intention}");
+        }
+        else {
+            _plan.Add(_plan.First());
         }
     }
 
@@ -249,7 +257,7 @@ public class BDIAgent : Agent
     {
         if (_plan.Count == 1) { // plan finished
             Debug.Log("plan is finished!");
-            _plan.Add(_plan.Last());
+            _plan.Add(_plan.First());
            /*  if (_intention == "go-to")
                 Send(_unity, "waiting");
             else
@@ -259,6 +267,18 @@ public class BDIAgent : Agent
         _plan.RemoveAt(0);
         Debug.Log($"Hello! I will now {action}, because I want to {_intention}");
         Send(_unity, action);
+    }
+
+    public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {
+        // Get Random Point inside Sphere which position is center, radius is maxDistance
+        Vector3 randomPos = UnityEngine.Random.insideUnitSphere * maxDistance + center;
+
+        NavMeshHit hit; // NavMesh Sampling Info Container
+
+        // from randomPos find a nearest point on NavMesh surface in range of maxDistance
+        NavMesh.SamplePosition(randomPos, out hit, maxDistance, NavMesh.AllAreas);
+
+        return hit.position;
     }
 }
 

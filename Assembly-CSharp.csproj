@@ -47,6 +47,7 @@
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractSocketServer.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/MessageException.cs" />
      <Compile Include="Assets/ItemHolder.cs" />
+     <Compile Include="Assets/Scripts/AgentHandler.cs" />
      <Compile Include="Assets/ActressMas/ContainerServer/ContainerMessage.cs" />
      <Compile Include="Assets/ActressMas/Info.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractMessageHeader.cs" />
@@ -83,7 +84,7 @@
      <Compile Include="Assets/ActressMas/ContainerServer/Server.cs" />
      <Compile Include="Assets/Scripts/Item.cs" />
      <Compile Include="Assets/Scripts/BDIAgent.cs" />
-     <Compile Include="Assets/Scripts/AgentHandler.cs" />
+     <Compile Include="Assets/Scripts/Worker.cs" />
      <None Include="Assets/ActressMas/ClientServer/copyright.txt" />
      <None Include="Assets/ActressMas/bin/Release/ActressMas.xml" />
     <Reference Include="UnityEngine">

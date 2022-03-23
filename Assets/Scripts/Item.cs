@@ -9,7 +9,7 @@ public class Item : MonoBehaviour
     public int time_spent_waiting;
     private float remaining_time = 5;
     private float days_per_step = 0.2f;
-    private float distance_threshold = 1.5f;
+    public float distance_threshold = 1.5f;
 
     public static Vector3 processPosition;
 
@@ -58,7 +58,6 @@ public class Item : MonoBehaviour
     }
     public bool inProcessPosition()
     {
-        Debug.Log($"{gameObject.name} is {(processPosition - gameObject.transform.position).magnitude} from it's process position");
         return (processPosition - gameObject.transform.position).magnitude <= distance_threshold;
     }
 

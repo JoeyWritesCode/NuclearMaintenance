@@ -85,7 +85,7 @@ public class UnityAgent : Agent
                     float distance = (destination - nmAgent.transform.position).magnitude;
                     Debug.Log($"The agent is {distance} away from the destination");
                     if (distance <= distanceThreshold) {
-                        UpdateVisualField(message.Sender, "start");
+                        Send(message.Sender, "arrive");
                     }
                     else;
                         Send(message.Sender, "travelling");
