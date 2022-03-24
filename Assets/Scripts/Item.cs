@@ -12,6 +12,8 @@ public class Item : MonoBehaviour
     private float days_per_step = 0.2f;
     public float distance_threshold = 0.25f;
 
+    private bool beingCarried = false;
+
     private Renderer renderer;
 
     public static Vector3 processPosition;
@@ -89,5 +91,14 @@ public class Item : MonoBehaviour
     {
         Debug.Log($"Destroying {gameObject.name}");
         Destroy(gameObject);
+    }
+
+    public bool isBeingCarried()
+    {
+        return beingCarried;
+    }
+    public void setBeingCarried(bool _beingCarried) 
+    {
+        beingCarried = _beingCarried;
     }
 }

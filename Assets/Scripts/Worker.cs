@@ -178,15 +178,22 @@ public class Worker : MonoBehaviour
                     break;
 
             case "collect":
-                Debug.Log($"We're on our way to {nextItem.GetPosition()} to {nextAction} {nextItem.GetName()}");
-                
-                if (isCarrying) {
-                    nextAction = "deliver";
+                if (nextItem.isBeingCarried()) {
+                    nextItem = null;
+                    nextAction = "decide";
                     break;
                 }
                 else {
-                    CollectItem();
-                    break;
+                    Debug.Log($"We're on our way to {nextItem.GetPosition()} to {nextAction} {nextItem.GetName()}");
+                    
+                    if (isCarrying) {
+                        nextAction = "deliver";
+                        break;
+                    }
+                    else {
+                        CollectItem();
+                        break;
+                    }
                 }
 
             case "deliver":
@@ -279,6 +286,8 @@ public class Worker : MonoBehaviour
             nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
             nextItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 1);
             nextItem.gameObject.transform.parent = gameObject.transform;
+
+            nextItem.setBeingCarried(true);
             nextItem.gameObject.tag = "HeldItem";
 
             destination = nextItem.GetProcessPosition();
@@ -295,6 +304,7 @@ public class Worker : MonoBehaviour
             nextItem.gameObject.transform.parent = null;
             nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
 
+            nextItem.setBeingCarried(false);
             nextItem.gameObject.tag = "Item";
             delivered = true;
         }
