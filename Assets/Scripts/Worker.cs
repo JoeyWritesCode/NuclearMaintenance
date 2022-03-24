@@ -33,7 +33,7 @@ public class Worker : MonoBehaviour
 
     /* ------------------------------------ The Worker parameters ----------------------------------- */
     private float visionDistance = 10.0f;
-    private float grabDistance = 0.25f;
+    private float grabDistance = 2.0f;
     private float travelSpeed = 5.0f;
     private float processSpeed = 1.0f;
 
@@ -175,9 +175,9 @@ public class Worker : MonoBehaviour
                 if (delivered) {
                     Debug.Log($"We have delivered {nextItem.GetName()}");
                     
-                    //nextItem = null;
                     delivered = false;
                     nextAction = "process";
+                    nmAgent.SetDestination(gameObject.transform.position);
                     break;
                 }
                 else
@@ -185,10 +185,7 @@ public class Worker : MonoBehaviour
                     break;
 
             case "process":
-                Debug.Log($"We will now process {nextItem.GetName()}");                
-
-                if (nextItem.isProcessed()) {
-                    nextItem = null;
+                if (nextItem == null) {
                     nextAction = "decide";
                     break;
                 }
@@ -258,6 +255,7 @@ public class Worker : MonoBehaviour
         if (nextItem.isProcessed()) {
             nextItem.complete();
             _beliefs.Remove(nextItem.GetName());
+            nextItem = null;
         }
     }
 }
