@@ -24,7 +24,9 @@ public class Item : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        processPosition = all_process_positions[gameObject.name];
+        if (!all_process_positions.TryGetValue(gameObject.name, out processPosition)) {
+            processPosition = new Vector3(0f, 2.5f, 0f);
+        }
         remaining_time = total_time;
         renderer = gameObject.GetComponent<Renderer>();
     }
@@ -37,7 +39,6 @@ public class Item : MonoBehaviour
     public void decrementProcessTime()
     {
         remaining_time -= days_per_step;
-        Debug.Log($"Remaining time: {remaining_time}");
         renderer.material.SetColor("_Color", new Color(remaining_time / total_time, 1, remaining_time / total_time));
     }
 

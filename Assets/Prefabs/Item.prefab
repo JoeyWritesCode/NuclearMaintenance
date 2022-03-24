@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6421452233568535767}
   m_Layer: 0
   m_Name: Item
-  m_TagString: Untagged
+  m_TagString: Item
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -110,6 +110,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
+  distance_threshold: 0.25
 --- !u!54 &6421452233568535767
 Rigidbody:
   m_ObjectHideFlags: 0

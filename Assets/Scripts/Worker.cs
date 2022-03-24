@@ -18,6 +18,7 @@ public class Worker : MonoBehaviour
     /* -------------------------------------- NavMesh variables ------------------------------------- */
     private NavMeshAgent nmAgent;
     private Vector3 destination;
+    private float wanderDistance = 5.0f;
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
     private Agent agent;
@@ -58,6 +59,8 @@ public class Worker : MonoBehaviour
         nmAgent = gameObject.GetComponent<NavMeshAgent>();
         
         nextItem = null;
+        destination = Vector3.zero;
+
         nextAction = "decide";
     }
 
@@ -139,17 +142,19 @@ public class Worker : MonoBehaviour
     {
         switch (nextAction) 
         {
-            // :et's step this out for now...
+            // Let's step this out for now...
             case "decide":
                 if (nextItem != null) {
                     if (nextItem.inProcessPosition()) {
                         nextAction = "process";
-                        nmAgent.SetDestination(nextItem.GetProcessPosition());
+                        destination = nextItem.GetProcessPosition();
+                        nmAgent.SetDestination(destination);
                         break;
                     }
                     else {
                         nextAction = "collect"; 
-                        nmAgent.SetDestination(nextItem.GetPosition());
+                        destination = nextItem.GetPosition();
+                        nmAgent.SetDestination(destination);
                         break;
                     }
                 }
@@ -177,7 +182,8 @@ public class Worker : MonoBehaviour
                     
                     delivered = false;
                     nextAction = "process";
-                    nmAgent.SetDestination(gameObject.transform.position);
+                    destination = gameObject.transform.position;
+                    nmAgent.SetDestination(destination);
                     break;
                 }
                 else
@@ -190,9 +196,20 @@ public class Worker : MonoBehaviour
                     break;
                 }
                 else {
-                    ProcessItem();
-                    break;
+                    nextItem.decrementProcessTime();
+
+                    if (nextItem.GetRemainingTime() <= 0) {
+                        nextItem.complete();
+                        _beliefs.Remove(nextItem.GetName());
+                        nextItem = null;
+                        break;
+                    }
+                    else {
+                        //Debug.Log($"Remaining time: {nextItem.GetRemainingTime()}");
+                        break;
+                    }
                 }
+                
 
             default:
                 break;
@@ -201,17 +218,31 @@ public class Worker : MonoBehaviour
 
     void DecideOnTask()
     {
-        List<string> availableTasks = new List<string>(_beliefs.Keys);
-        availableTasks.OrderBy(name => TravelEffort(name));
-
-        // We may get to the point where there are no more beliefs held.
-        try {
-            nextItem = GameObject.Find(availableTasks[0]).GetComponent<Item>();
-            
-            destination = nextItem.GetPosition();
+        if (destination == Vector3.zero) {
+            destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
+            Debug.Log($"New location is {destination}");
+            nmAgent.SetDestination(destination);
         }
-        catch (Exception ex) {
-            destination = GetRandomPoint(gameObject.transform.position, 5.0f);
+        else {
+            if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
+                List<string> availableTasks = new List<string>(_beliefs.Keys);
+                availableTasks.OrderBy(name => TravelEffort(name));
+
+                // We may get to the point where there are no more beliefs held.
+                if (availableTasks.Count() >= 1) {
+                    nextItem = GameObject.Find(availableTasks[0]).GetComponent<Item>();
+
+                    Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
+                    destination = nextItem.GetPosition();
+                    nmAgent.SetDestination(destination);
+                }
+                else {
+                    destination = Vector3.zero;
+                }
+            }
+            else {
+                Debug.Log($"Current position {gameObject.transform.position} is more than {grabDistance} from {destination}, so continue");
+            }
         }
     }
 
@@ -227,7 +258,8 @@ public class Worker : MonoBehaviour
             nextItem.gameObject.transform.parent = gameObject.transform;
             nextItem.gameObject.tag = "HeldItem";
 
-            nmAgent.SetDestination(nextItem.GetProcessPosition());
+            destination = nextItem.GetProcessPosition();
+            nmAgent.SetDestination(destination);
             nextAction = "deliver";
         }
     }
@@ -235,7 +267,7 @@ public class Worker : MonoBehaviour
     void DeliverItem()
     {
         // check if distance to item is less than distance threshold
-        if (nextItem.inProcessPosition()) {
+        if ((nextItem.GetProcessPosition() - gameObject.transform.position).magnitude <= nextItem.distance_threshold) {
             Debug.Log($"Let's drop this {nextItem.GetName()}");
             nextItem.gameObject.transform.parent = null;
             nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
@@ -245,7 +277,7 @@ public class Worker : MonoBehaviour
         }
         else {
             float distance = (nextItem.GetProcessPosition() - gameObject.transform.position).magnitude;
-            Debug.Log($"This agent is currently {distance} away from it's process position {nextItem.GetProcessPosition()}. We have to be {nextItem.distance_threshold} in order to drop this item.");
+            Debug.Log($"This agent is currently {distance} away from it's process position {nextItem.GetProcessPosition()}. We have to be at least {nextItem.distance_threshold} in order to drop this item.");
         }
     }
 
@@ -256,6 +288,7 @@ public class Worker : MonoBehaviour
             nextItem.complete();
             _beliefs.Remove(nextItem.GetName());
             nextItem = null;
+            destination = Vector3.zero;
         }
     }
 }
