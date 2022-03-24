@@ -69,6 +69,7 @@ public class Worker : MonoBehaviour
             _beliefs = GetObjectsInRange(gameObject.transform.position);
             steps = 0;
         }
+        Debug.Log(nextAction);
         Act();
     }
 
@@ -111,6 +112,10 @@ public class Worker : MonoBehaviour
         return hit.position;
     }
 
+    bool isCloseTo(Vector3 locationOne, Vector3 locationTwo, float minimumDistance) {
+        return (locationTwo - locationOne).magnitude <= minimumDistance;
+    }
+
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
     /*                                GameObject interaction functions                                */
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -134,46 +139,63 @@ public class Worker : MonoBehaviour
     {
         switch (nextAction) 
         {
+            // :et's step this out for now...
             case "decide":
-                DecideOnTask();
-
-                if (nextItem != null)
-                    if (nextItem.inProcessPosition())
+                if (nextItem != null) {
+                    if (nextItem.inProcessPosition()) {
                         nextAction = "process";
-                    else
+                        nmAgent.SetDestination(nextItem.GetProcessPosition());
+                        break;
+                    }
+                    else {
                         nextAction = "collect"; 
                         nmAgent.SetDestination(nextItem.GetPosition());
-                break;
+                        break;
+                    }
+                }
+                else 
+                    DecideOnTask();
+                    break;
 
             case "collect":
                 Debug.Log($"We're on our way to {nextItem.GetPosition()} to {nextAction} {nextItem.GetName()}");
                 
-                CollectItem();
-                if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= grabDistance)
-                    nmAgent.SetDestination(nextItem.GetProcessPosition());
+                if (isCarrying) {
                     nextAction = "deliver";
-                break;
+                    break;
+                }
+                else {
+                    CollectItem();
+                    break;
+                }
 
             case "deliver":
-                Debug.Log($"We're on our way to {nextItem.GetProcessPosition()} to {nextAction} {nextItem.GetName()}");
-                DeliverItem();
-        
-                if ((nextItem.GetProcessPosition() - gameObject.transform.position).magnitude <= nextItem.distance_threshold)
+                Debug.Log($"We're on our way to {nextItem.GetProcessPosition()} to deliver {nextItem.GetName()}");
+
+                if (delivered) {
                     Debug.Log($"We have delivered {nextItem.GetName()}");
                     
                     //nextItem = null;
                     delivered = false;
-                    nextAction = "decide";
-                break;
+                    nextAction = "process";
+                    break;
+                }
+                else
+                    DeliverItem();
+                    break;
 
             case "process":
-                Debug.Log($"We're on our way to {destination} to {nextAction} {nextItem.GetName()}");
-                ProcessItem();
+                Debug.Log($"We will now process {nextItem.GetName()}");                
 
-                if (nextItem.isProcessed())
-                    nextAction = "decide";
+                if (nextItem.isProcessed()) {
                     nextItem = null;
-                break;
+                    nextAction = "decide";
+                    break;
+                }
+                else {
+                    ProcessItem();
+                    break;
+                }
 
             default:
                 break;
@@ -208,22 +230,25 @@ public class Worker : MonoBehaviour
             nextItem.gameObject.transform.parent = gameObject.transform;
             nextItem.gameObject.tag = "HeldItem";
 
-            isCarrying = true;
+            nmAgent.SetDestination(nextItem.GetProcessPosition());
+            nextAction = "deliver";
         }
     }
 
     void DeliverItem()
     {
         // check if distance to item is less than distance threshold
-        if ((nextItem.GetProcessPosition() - gameObject.transform.position).magnitude > nextItem.distance_threshold)
-            Debug.Log((nextItem.GetProcessPosition() - gameObject.transform.position).magnitude);
-        else {
+        if (nextItem.inProcessPosition()) {
             Debug.Log($"Let's drop this {nextItem.GetName()}");
             nextItem.gameObject.transform.parent = null;
             nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
 
             nextItem.gameObject.tag = "Item";
             delivered = true;
+        }
+        else {
+            float distance = (nextItem.GetProcessPosition() - gameObject.transform.position).magnitude;
+            Debug.Log($"This agent is currently {distance} away from it's process position {nextItem.GetProcessPosition()}. We have to be {nextItem.distance_threshold} in order to drop this item.");
         }
     }
 

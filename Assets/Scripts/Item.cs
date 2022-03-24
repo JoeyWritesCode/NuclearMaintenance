@@ -8,8 +8,8 @@ public class Item : MonoBehaviour
     
     public int time_spent_waiting;
     private float remaining_time = 5;
-    private float days_per_step = 0.2f;
-    public float distance_threshold = 3.0f;
+    private float days_per_step = 0.02f;
+    public float distance_threshold = 0.5f;
 
     public static Vector3 processPosition;
 
@@ -58,6 +58,8 @@ public class Item : MonoBehaviour
     }
     public bool inProcessPosition()
     {
+        float distance = (processPosition - gameObject.transform.position).magnitude;
+        Debug.Log($"The distance between {gameObject.name} and it's process position {processPosition} is {distance}. In order to be delivered, it must be less than {distance_threshold}");
         return (processPosition - gameObject.transform.position).magnitude <= distance_threshold;
     }
 
@@ -68,6 +70,7 @@ public class Item : MonoBehaviour
 
     public void complete()
     {
+        Debug.Log($"Destroying {gameObject.name}");
         Destroy(gameObject);
     }
 }
