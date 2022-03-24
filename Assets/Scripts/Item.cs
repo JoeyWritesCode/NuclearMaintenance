@@ -7,9 +7,12 @@ public class Item : MonoBehaviour
     private static  Dictionary<string, float> itemMaintences;
     
     public int time_spent_waiting;
-    private float remaining_time = 5;
-    private float days_per_step = 0.02f;
+    private float total_time = 50.0f;
+    private float remaining_time;
+    private float days_per_step = 0.2f;
     public float distance_threshold = 0.25f;
+
+    private Renderer renderer;
 
     public static Vector3 processPosition;
 
@@ -22,6 +25,8 @@ public class Item : MonoBehaviour
     void Start()
     {
         processPosition = all_process_positions[gameObject.name];
+        remaining_time = total_time;
+        renderer = gameObject.GetComponent<Renderer>();
     }
 
     void Update()
@@ -32,6 +37,8 @@ public class Item : MonoBehaviour
     public void decrementProcessTime()
     {
         remaining_time -= days_per_step;
+        Debug.Log($"Remaining time: {remaining_time}");
+        renderer.material.SetColor("_Color", new Color(remaining_time / total_time, 1, remaining_time / total_time));
     }
 
     public bool isProcessed()
