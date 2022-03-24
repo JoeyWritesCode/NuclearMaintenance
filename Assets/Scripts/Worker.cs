@@ -4,6 +4,8 @@ using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 
+using TMPro;
+
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -14,6 +16,9 @@ public class Worker : MonoBehaviour
     /* ----------------------------- The GameObject used for picking up ----------------------------- */
     // - Could we just use the Worker as the parent object, with a small offset?
     public GameObject Hands;
+
+    /* ------------------------------------ The heads up display ------------------------------------ */
+    public TMP_Text TextBox;
 
     /* -------------------------------------- NavMesh variables ------------------------------------- */
     private NavMeshAgent nmAgent;
@@ -38,14 +43,14 @@ public class Worker : MonoBehaviour
     private float travelSpeed = 5.0f;
     private float processSpeed = 1.0f;
 
-    /* ---------------------------------- The next associated item ---------------------------------- */
+    /* ---------------------------------- Task management variables --------------------------------- */
     private Item nextItem;
     private bool isCarrying;
     private bool delivered;
     private string nextAction;
 
     /* ------------------------------------ Simulation parameters ----------------------------------- */
-    private int stepsBetweenObservations = 10;
+    private int stepsBetweenObservations = 5;
     private int steps = 0;
 
     void Start()
@@ -72,8 +77,14 @@ public class Worker : MonoBehaviour
             _beliefs = GetObjectsInRange(gameObject.transform.position);
             steps = 0;
         }
-        Debug.Log(nextAction);
+        string lastAction = nextAction;
         Act();
+        if (lastAction != nextAction)
+            UpdateTextBox();
+    }
+
+    void UpdateTextBox() {
+        TextBox.text = nextAction;
     }
 
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -145,7 +156,11 @@ public class Worker : MonoBehaviour
             // Let's step this out for now...
             case "decide":
                 if (nextItem != null) {
-                    if (nextItem.inProcessPosition()) {
+                    if ((nextItem.transform.position - gameObject.transform.position).magnitude > wanderDistance * 2) {
+                        nextItem = null;
+                        break;
+                    }
+                    else if (nextItem.inProcessPosition()) {
                         nextAction = "process";
                         destination = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(destination);
@@ -218,7 +233,7 @@ public class Worker : MonoBehaviour
 
     void DecideOnTask()
     {
-        if (destination == Vector3.zero) {
+        if (destination == Vector3.zero || destination.x == float.MaxValue) {
             destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
             Debug.Log($"New location is {destination}");
             nmAgent.SetDestination(destination);
@@ -231,10 +246,18 @@ public class Worker : MonoBehaviour
                 // We may get to the point where there are no more beliefs held.
                 if (availableTasks.Count() >= 1) {
                     nextItem = GameObject.Find(availableTasks[0]).GetComponent<Item>();
-
-                    Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
-                    destination = nextItem.GetPosition();
-                    nmAgent.SetDestination(destination);
+                
+                    // This is a temporary fix (ish) for when objects fall through the floor. As long as we try to make sure 
+                    // not to do that.
+                    if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= 2 * wanderDistance) {
+                        Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
+                        destination = nextItem.GetPosition();
+                        nmAgent.SetDestination(destination);
+                    }
+                    else {
+                        nextItem = null;
+                        destination = Vector3.zero;
+                    }
                 }
                 else {
                     destination = Vector3.zero;

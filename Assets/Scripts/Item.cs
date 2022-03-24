@@ -24,11 +24,20 @@ public class Item : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        renderer = gameObject.GetComponent<Renderer>();
         if (!all_process_positions.TryGetValue(gameObject.name, out processPosition)) {
-            processPosition = new Vector3(0f, 2.5f, 0f);
+            
+            Color Red = new Color(255, 0, 0);
+            Color Blue = new Color(0, 0, 255);
+
+            if (renderer.material.GetColor("_Color") == Red)
+                processPosition = new Vector3(-10.0f, 2.5f, -1.5f);
+            else if (renderer.material.GetColor("_Color") == Blue)
+                processPosition = new Vector3(9.0f, 2.5f, -1.5f);
+            else
+                processPosition = new Vector3(0f, 2.5f, 0f);
         }
         remaining_time = total_time;
-        renderer = gameObject.GetComponent<Renderer>();
     }
 
     void Update()
