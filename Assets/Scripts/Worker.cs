@@ -25,6 +25,7 @@ public class Worker : MonoBehaviour
     /* -------------------------------------- NavMesh variables ------------------------------------- */
     private NavMeshAgent nmAgent;
     private Vector3 destination;
+    private Vector3 processPosition;
     private float wanderDistance = 7.5f;
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
@@ -41,7 +42,7 @@ public class Worker : MonoBehaviour
 
     /* ------------------------------------ The Worker parameters ----------------------------------- */
     private float visionDistance = 10.0f;
-    private float grabDistance = 2.0f;
+    private float grabDistance = 1.0f;
     private float travelSpeed = 5.0f;
     private float processSpeed = 1.0f;
 
@@ -161,11 +162,13 @@ public class Worker : MonoBehaviour
         {
             // Let's step this out for now...
             case "decide":
+                DecideOnTask();
                 if (nextItem != null) {
                     /* if ((nextItem.transform.position - gameObject.transform.position).magnitude > wanderDistance * 5) {
                         nextItem = null;
                         break;
                     } */
+
                     if (nextItem.inProcessPosition()) {
                         destination = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(destination);
@@ -175,42 +178,58 @@ public class Worker : MonoBehaviour
                     }
                     else {
                         destination = nextItem.GetPosition();
+                        processPosition = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(destination);
 
                         nextAction = "collect"; 
                         break;
                     }
                 }
-                else 
-                    DecideOnTask();
+                else {
+                    if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
+                        destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
+                        Debug.Log($"New location is {destination}");
+                        nmAgent.SetDestination(destination);
+                    }
                     break;
+                }
+
 
             case "collect":
-                CollectItem();
-                Debug.Log($"We're on our way to {nextItem.GetPosition()} to {nextAction} {nextItem.GetName()}");
-                
                 if (nextItem.isUnavailable()) {
+                    Debug.Log("Someone picked that up!");
                     nextItem = null;
+
                     destination = gameObject.transform.position;
+                    nmAgent.SetDestination(destination);
+
                     nextAction = "decide";
                     break;
                 }
                 else {
-                    nextItem.gameObject.tag = "HeldItem";
-                    nextAction = "deliver";
-                    break;
+                    if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= grabDistance) {
+                        CollectItem();
+                        nextItem.gameObject.tag = "HeldItem";
+
+                        //destination = nextItem.GetProcessPosition();
+                        nmAgent.SetDestination(processPosition);
+
+                        nextAction = "deliver";
+                        break;
+                    }
+                    else {
+                        Debug.Log($"We're on our way to {destination} to collect {nextItem.GetName()}");
+                        break;
+                    }
                 }
-                
 
             case "deliver":
-                Debug.Log($"We're on our way to {destination} to deliver {nextItem.GetName()}");
+                Debug.Log($"We're on our way to {processPosition} to deliver {nextItem.GetName()}");
 
-                DeliverItem();
-                if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
-                    Debug.Log($"We have delivered {nextItem.GetName()}");
+                if ((processPosition - gameObject.transform.position).magnitude <= grabDistance) {
+                    DeliverItem();
                     
-                    destination = gameObject.transform.position;
-                    nmAgent.SetDestination(destination);
+                    nmAgent.SetDestination(gameObject.transform.position);
                     
                     nextItem.gameObject.tag = "ActiveItem";
                     nextAction = "process";
@@ -219,26 +238,25 @@ public class Worker : MonoBehaviour
 
             case "process":
                 if (nextItem == null) {
-                    destination = gameObject.transform.position;
                     nextAction = "decide";
                     break;
                 }
                 else {
-                    nextItem.decrementProcessTime();
-
                     if (nextItem.GetRemainingTime() <= 0) {
                         nextItem.complete();
                         _beliefs.Remove(nextItem.GetName());
 
                         nextItem = null;
-                        destination = gameObject.transform.position;
+
+                        destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
+                        nmAgent.SetDestination(destination);
 
                         nextAction = "decide";
                         break;
                     }
                     else {
                         //Debug.Log($"Remaining time: {nextItem.GetRemainingTime()}");
-                        nextAction = "process";
+                        nextItem.decrementProcessTime();
                         break;
                     }
                 }
@@ -255,32 +273,24 @@ public class Worker : MonoBehaviour
         availableTasks.OrderBy(name => TravelEffort(name));
 
         // We may get to the point where there are no more beliefs held.
-        if (availableTasks.Count() >= 1) {
-            nextItem = GameObject.Find(availableTasks[0]).GetComponent<Item>();
+        foreach (string item in availableTasks) {
+            nextItem = GameObject.Find(item).GetComponent<Item>();
         
             // This is a temporary fix (ish) for when objects fall through the floor. As long as we try to make sure 
             // not to do that.
             if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= 5 * wanderDistance && !nextItem.isUnavailable()) {
                 Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
+                break;
             }
             else {
                 nextItem = null;
             }
-        }
-
-        if (nextItem == null && (destination - gameObject.transform.position).magnitude <= grabDistance) {
-            destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
-            Debug.Log($"New location is {destination}");
-            nmAgent.SetDestination(destination);
         }
     }
 
     void CollectItem()
     {
         // check if distance to item is less than distance threshold
-        if ((nextItem.GetPosition() - gameObject.transform.position).magnitude > grabDistance)
-            Debug.Log((nextItem.GetPosition() - gameObject.transform.position).magnitude);
-        else {
             Debug.Log($"Let's pick up this {nextItem.GetName()}");
             nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
             nextItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 1);
@@ -288,28 +298,16 @@ public class Worker : MonoBehaviour
 
             nextItem.setBeingCarried(true);
             nextItem.gameObject.tag = "HeldItem";
-
-            destination = nextItem.GetProcessPosition();
-            nmAgent.SetDestination(destination);
-            nextAction = "deliver";
-        }
     }
 
     void DeliverItem()
     {
-        // check if distance to item is less than distance threshold
-        if ((nextItem.GetProcessPosition() - gameObject.transform.position).magnitude <= nextItem.distance_threshold) {
-            Debug.Log($"Let's drop this {nextItem.GetName()}");
-            nextItem.gameObject.transform.parent = null;
-            nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
+        Debug.Log($"Let's drop this {nextItem.GetName()}");
+        nextItem.gameObject.transform.parent = null;
+        nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
 
-            nextItem.setBeingCarried(false);
-            nextItem.gameObject.tag = "Item";
-        }
-/*         else {
-            float distance = (nextItem.GetProcessPosition() - gameObject.transform.position).magnitude;
-            Debug.Log($"This agent is currently {distance} away from it's process position {nextItem.GetProcessPosition()}. We have to be at least {nextItem.distance_threshold} in order to drop this item.");
-        } */
+        nextItem.setBeingCarried(false);
+        nextItem.gameObject.tag = "Item";
     }
 
     void ProcessItem()
