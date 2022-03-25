@@ -19,11 +19,13 @@ public class Worker : MonoBehaviour
 
     /* ------------------------------------ The heads up display ------------------------------------ */
     public TMP_Text TextBox;
+    private string textPrompt;
+    private string lastPrompt;
 
     /* -------------------------------------- NavMesh variables ------------------------------------- */
     private NavMeshAgent nmAgent;
     private Vector3 destination;
-    private float wanderDistance = 5.0f;
+    private float wanderDistance = 7.5f;
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
     private Agent agent;
@@ -64,27 +66,31 @@ public class Worker : MonoBehaviour
         nmAgent = gameObject.GetComponent<NavMeshAgent>();
         
         nextItem = null;
-        destination = Vector3.zero;
+        destination = gameObject.transform.position;
 
         nextAction = "decide";
+        textPrompt = "decide";
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (nextItem == null) {
+            UpdateTextBox("deciding");
+        }
+        else {
+            UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
+        }
         steps++;
         if (steps == stepsBetweenObservations) {
             _beliefs = GetObjectsInRange(gameObject.transform.position);
             steps = 0;
         }
-        string lastAction = nextAction;
         Act();
-        if (lastAction != nextAction)
-            UpdateTextBox();
     }
 
-    void UpdateTextBox() {
-        TextBox.text = nextAction;
+    void UpdateTextBox(string _textPrompt) {
+        TextBox.text = _textPrompt;
     }
 
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -156,20 +162,22 @@ public class Worker : MonoBehaviour
             // Let's step this out for now...
             case "decide":
                 if (nextItem != null) {
-                    if ((nextItem.transform.position - gameObject.transform.position).magnitude > wanderDistance * 2) {
+                    /* if ((nextItem.transform.position - gameObject.transform.position).magnitude > wanderDistance * 5) {
                         nextItem = null;
                         break;
-                    }
-                    else if (nextItem.inProcessPosition()) {
-                        nextAction = "process";
+                    } */
+                    if (nextItem.inProcessPosition()) {
                         destination = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(destination);
+
+                        nextAction = "process";
                         break;
                     }
                     else {
-                        nextAction = "collect"; 
                         destination = nextItem.GetPosition();
                         nmAgent.SetDestination(destination);
+
+                        nextAction = "collect"; 
                         break;
                     }
                 }
@@ -178,42 +186,40 @@ public class Worker : MonoBehaviour
                     break;
 
             case "collect":
-                if (nextItem.isBeingCarried()) {
+                CollectItem();
+                Debug.Log($"We're on our way to {nextItem.GetPosition()} to {nextAction} {nextItem.GetName()}");
+                
+                if (nextItem.isUnavailable()) {
                     nextItem = null;
+                    destination = gameObject.transform.position;
                     nextAction = "decide";
                     break;
                 }
                 else {
-                    Debug.Log($"We're on our way to {nextItem.GetPosition()} to {nextAction} {nextItem.GetName()}");
-                    
-                    if (isCarrying) {
-                        nextAction = "deliver";
-                        break;
-                    }
-                    else {
-                        CollectItem();
-                        break;
-                    }
+                    nextItem.gameObject.tag = "HeldItem";
+                    nextAction = "deliver";
+                    break;
                 }
+                
 
             case "deliver":
-                Debug.Log($"We're on our way to {nextItem.GetProcessPosition()} to deliver {nextItem.GetName()}");
+                Debug.Log($"We're on our way to {destination} to deliver {nextItem.GetName()}");
 
-                if (delivered) {
+                DeliverItem();
+                if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
                     Debug.Log($"We have delivered {nextItem.GetName()}");
                     
-                    delivered = false;
-                    nextAction = "process";
                     destination = gameObject.transform.position;
                     nmAgent.SetDestination(destination);
-                    break;
+                    
+                    nextItem.gameObject.tag = "ActiveItem";
+                    nextAction = "process";
                 }
-                else
-                    DeliverItem();
-                    break;
+                break;
 
             case "process":
                 if (nextItem == null) {
+                    destination = gameObject.transform.position;
                     nextAction = "decide";
                     break;
                 }
@@ -223,15 +229,19 @@ public class Worker : MonoBehaviour
                     if (nextItem.GetRemainingTime() <= 0) {
                         nextItem.complete();
                         _beliefs.Remove(nextItem.GetName());
+
                         nextItem = null;
+                        destination = gameObject.transform.position;
+
+                        nextAction = "decide";
                         break;
                     }
                     else {
                         //Debug.Log($"Remaining time: {nextItem.GetRemainingTime()}");
+                        nextAction = "process";
                         break;
                     }
                 }
-                
 
             default:
                 break;
@@ -240,39 +250,28 @@ public class Worker : MonoBehaviour
 
     void DecideOnTask()
     {
-        if (destination == Vector3.zero || destination.x == float.MaxValue) {
+        // List<string> availableTasks = new List<string>(_beliefs.Keys);
+        List<string> availableTasks = new List<string>(GetObjectsInRange(gameObject.transform.position).Keys);
+        availableTasks.OrderBy(name => TravelEffort(name));
+
+        // We may get to the point where there are no more beliefs held.
+        if (availableTasks.Count() >= 1) {
+            nextItem = GameObject.Find(availableTasks[0]).GetComponent<Item>();
+        
+            // This is a temporary fix (ish) for when objects fall through the floor. As long as we try to make sure 
+            // not to do that.
+            if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= 5 * wanderDistance && !nextItem.isUnavailable()) {
+                Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
+            }
+            else {
+                nextItem = null;
+            }
+        }
+
+        if (nextItem == null && (destination - gameObject.transform.position).magnitude <= grabDistance) {
             destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
             Debug.Log($"New location is {destination}");
             nmAgent.SetDestination(destination);
-        }
-        else {
-            if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
-                List<string> availableTasks = new List<string>(_beliefs.Keys);
-                availableTasks.OrderBy(name => TravelEffort(name));
-
-                // We may get to the point where there are no more beliefs held.
-                if (availableTasks.Count() >= 1) {
-                    nextItem = GameObject.Find(availableTasks[0]).GetComponent<Item>();
-                
-                    // This is a temporary fix (ish) for when objects fall through the floor. As long as we try to make sure 
-                    // not to do that.
-                    if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= 2 * wanderDistance) {
-                        Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
-                        destination = nextItem.GetPosition();
-                        nmAgent.SetDestination(destination);
-                    }
-                    else {
-                        nextItem = null;
-                        destination = Vector3.zero;
-                    }
-                }
-                else {
-                    destination = Vector3.zero;
-                }
-            }
-            else {
-                Debug.Log($"Current position {gameObject.transform.position} is more than {grabDistance} from {destination}, so continue");
-            }
         }
     }
 
@@ -306,12 +305,11 @@ public class Worker : MonoBehaviour
 
             nextItem.setBeingCarried(false);
             nextItem.gameObject.tag = "Item";
-            delivered = true;
         }
-        else {
+/*         else {
             float distance = (nextItem.GetProcessPosition() - gameObject.transform.position).magnitude;
             Debug.Log($"This agent is currently {distance} away from it's process position {nextItem.GetProcessPosition()}. We have to be at least {nextItem.distance_threshold} in order to drop this item.");
-        }
+        } */
     }
 
     void ProcessItem()

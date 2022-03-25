@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
-    private static  Dictionary<string, float> itemMaintences;
+    private static Dictionary<string, float> itemMaintences;
     
     public int time_spent_waiting;
     private float total_time = 50.0f;
@@ -93,9 +93,9 @@ public class Item : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public bool isBeingCarried()
+    public bool isUnavailable()
     {
-        return beingCarried;
+        return beingCarried || remaining_time < total_time;
     }
     public void setBeingCarried(bool _beingCarried) 
     {
