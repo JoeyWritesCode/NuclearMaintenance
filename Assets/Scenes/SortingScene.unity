@@ -178,6 +178,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Agent (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 6188494374071425534, guid: 2c60ee9a3abe44e859d6d0e17928ebc7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2c60ee9a3abe44e859d6d0e17928ebc7, type: 3}
 --- !u!1001 &845618241
@@ -237,10 +241,56 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6188494374071425534, guid: 2c60ee9a3abe44e859d6d0e17928ebc7, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2c60ee9a3abe44e859d6d0e17928ebc7, type: 3}
+--- !u!1 &863718743
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 863718744}
+  - component: {fileID: 863718745}
+  m_Layer: 0
+  m_Name: AgentHub
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &863718744
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 863718743}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &863718745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 863718743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5286e8cfe1b624d7c8da62aa6316797d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentPrefab: {fileID: 6188494374071425534, guid: 2c60ee9a3abe44e859d6d0e17928ebc7, type: 3}
+  numberOfAgents: 1
+  step: 0
 --- !u!1001 &899589788
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -298,7 +348,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6188494374071425534, guid: 2c60ee9a3abe44e859d6d0e17928ebc7, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2c60ee9a3abe44e859d6d0e17928ebc7, type: 3}
@@ -409,7 +459,7 @@ GameObject:
   - component: {fileID: 1940056850}
   - component: {fileID: 1940056849}
   m_Layer: 0
-  m_Name: WideFloor
+  m_Name: Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -515,7 +565,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1940056848}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.105615616, y: 1.9274712, z: -1.2465658}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2.5, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -599,7 +649,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1971366509}
   m_LocalRotation: {x: 0.13139133, y: 0, z: 0, w: 0.9913306}
-  m_LocalPosition: {x: -0, y: 9.83, z: -20.3}
+  m_LocalPosition: {x: 0, y: 9.54, z: -20.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

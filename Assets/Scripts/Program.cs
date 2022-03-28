@@ -34,19 +34,15 @@ public class Program : MonoBehaviour
     private EnvironmentMas env;
 
     void Start() {
-        env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 50, randomOrder: false, parallel: false);
+        env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 5, randomOrder: false, parallel: false);
 
         for (int i = 0; i < numberOfAgents; i++) {
             
             GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").transform.position, 10f), Quaternion.identity);
-            agentObject.name = "unity_" + i;
-
-            var unityAgent = new UnityAgent();
-            unityAgent._bdi = "bdi_" + i;
-            agentObject.GetComponent<AgentHandler>().SetAgent(unityAgent);
-            env.Add(unityAgent, agentObject.name);
+            agentObject.name = "abm_" + i;
             
             var bdiAgent = new BDIAgent(agentObject.name);
+            bdiAgent._abm = agentObject.name;
             env.Add(bdiAgent, "bdi_" + i);
         }
         
@@ -57,6 +53,7 @@ public class Program : MonoBehaviour
 
     void Update()
     {
+        // Update every 
         env.RunTurn(step++);
     }
 

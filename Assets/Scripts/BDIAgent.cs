@@ -22,7 +22,7 @@ public class BDIAgent : Agent
     private float travel_speed;
     private float process_speed;
 
-    private string _unity;
+    public string _abm;
     private Item next_item;
 
     private List<string> availableTasks;
@@ -40,7 +40,7 @@ public class BDIAgent : Agent
         _intention = "";
         _plan = new List<string>();
 
-        _unity = unityName;
+        _abm = unityName;
 
         travel_speed = 5.0f;
         process_speed = 5.0f;
@@ -54,7 +54,7 @@ public class BDIAgent : Agent
 
         _size = Environment.Memory["Size"];
 
-        position = GameObject.Find(_unity).transform.position;
+        position = GameObject.Find(_abm).transform.position;
         destination = Vector3.zero;
 
     }
@@ -259,14 +259,14 @@ public class BDIAgent : Agent
             Debug.Log("plan is finished!");
             _plan.Add(_plan.First());
            /*  if (_intention == "go-to")
-                Send(_unity, "waiting");
+                Send(_abm, "waiting");
             else
-                Send(_unity, "start"); */
+                Send(_abm, "start"); */
         }
         action = _plan[0];
         _plan.RemoveAt(0);
         Debug.Log($"Hello! I will now {action}, because I want to {_intention}");
-        Send(_unity, action);
+        Send(_abm, action);
     }
 
     public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {

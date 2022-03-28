@@ -42,7 +42,7 @@ public class Worker : MonoBehaviour
 
     /* ------------------------------------ The Worker parameters ----------------------------------- */
     private float visionDistance = 10.0f;
-    private float grabDistance = 1.0f;
+    private float grabDistance = 2.0f;
     private float travelSpeed = 5.0f;
     private float processSpeed = 1.0f;
 
@@ -225,6 +225,7 @@ public class Worker : MonoBehaviour
 
             case "deliver":
                 Debug.Log($"We're on our way to {processPosition} to deliver {nextItem.GetName()}");
+                //Debug.Log((processPosition - gameObject.transform.position).magnitude);
 
                 if ((processPosition - gameObject.transform.position).magnitude <= grabDistance) {
                     DeliverItem();
@@ -255,7 +256,7 @@ public class Worker : MonoBehaviour
                         break;
                     }
                     else {
-                        //Debug.Log($"Remaining time: {nextItem.GetRemainingTime()}");
+                        Debug.Log($"Remaining time: {nextItem.GetRemainingTime()}");
                         nextItem.decrementProcessTime();
                         break;
                     }

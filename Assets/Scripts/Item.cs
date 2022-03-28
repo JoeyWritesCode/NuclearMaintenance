@@ -50,7 +50,7 @@ public class Item : MonoBehaviour
     public void decrementProcessTime()
     {
         remaining_time -= days_per_step;
-        renderer.material.SetColor("_Color", new Color(remaining_time / total_time, 1, remaining_time / total_time));
+        renderer.material.SetColor("_Color", new Color(remaining_time / total_time, 255, remaining_time / total_time));
     }
 
     public bool isProcessed()
