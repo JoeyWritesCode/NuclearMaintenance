@@ -23,6 +23,46 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+public class WorldAction
+{
+    private string identifier;
+    private List<string> parameters;
+    private string state;
+
+    private int i = 0;
+
+    public WorldAction(string _identifier, List<string> _parameters, string _state) {
+        identifier = _identifier;
+        parameters = _parameters;
+        state = _state;
+    }
+
+    public void SetState(string newState) {
+        state = newState;
+    }
+
+    public string GetState() {
+        return state;
+    }
+
+    public List<string> GetParameters() {
+        return parameters;
+    }
+
+    public string GetIdentifier() {
+        return identifier;
+    }
+}
+
+public class Percept 
+{
+    private string identifier;
+
+    public Percept(string _identifier, Vector3 _value) {
+        identifier = _identifier;
+    }
+}
+
 
 public class Program : MonoBehaviour
 {
@@ -40,13 +80,17 @@ public class Program : MonoBehaviour
             
             GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").transform.position, 10f), Quaternion.identity);
             agentObject.name = "abm_" + i;
-            agentObject.agent = new UnityAgent();
+
+            var unityAgent = new UnityAgent();
+            unityAgent.worker = agentObject.GetComponent<Worker>();
             
-            var bdiAgent = new BDIAgent(agentObject.name);
-            bdiAgent._abm = agentObject.name;
+            //var bdiAgent = new BDIAgent(agentObject.name);
             
-            env.Add(bdiAgent, "bdi_" + i);
-            env.Add(agentObject.agent, agentObject.name);
+            //bdiAgent._abm = unityAgent;
+            //unityAgent._bdi = bdiAgent;
+            
+            //env.Add(bdiAgent, "bdi_" + i);
+            env.Add(unityAgent, "unity_" + i);
         }
         
         env.Memory.Add("Size", 15);
@@ -54,7 +98,7 @@ public class Program : MonoBehaviour
         step = 0;
     }
 
-    void Update()
+    async void Update()
     {
         // Update every 
         env.RunTurn(step++);

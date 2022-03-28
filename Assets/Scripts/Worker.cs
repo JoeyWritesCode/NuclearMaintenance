@@ -31,7 +31,8 @@ public class Worker : MonoBehaviour
     private float wanderDistance = 7.5f;
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
-    public Agent agent;
+    public UnityAgent agent;
+    public List<string> inputActions;
 
     /* ------------------------------------- The BDI structures ------------------------------------- */
     // - Right now, not used
@@ -52,7 +53,7 @@ public class Worker : MonoBehaviour
     private Item nextItem;
     private bool isCarrying;
     private bool delivered;
-    private string nextAction;
+    public string nextAction;
 
     /* ------------------------------------ Simulation parameters ----------------------------------- */
     private int stepsBetweenObservations = 5;
@@ -73,6 +74,8 @@ public class Worker : MonoBehaviour
 
         nextAction = "decide";
         textPrompt = "decide";
+
+        inputActions = new List<string>(){"decide"};
     }
 
     // Update is called once per frame
@@ -89,7 +92,7 @@ public class Worker : MonoBehaviour
             _beliefs = GetObjectsInRange(gameObject.transform.position);
             steps = 0;
         }
-        Act();
+        //Act();
     }
 
     void UpdateTextBox(string _textPrompt) {
@@ -158,9 +161,9 @@ public class Worker : MonoBehaviour
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
     /*                                        The Act function                                        */
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-    public void Act()
+    public void Act(WorldAction nextAction)
     {
-        switch (nextAction) 
+        switch (nextAction.GetIdentifier()) 
         {
             // Let's step this out for now...
             case "decide":
@@ -175,7 +178,7 @@ public class Worker : MonoBehaviour
                         destination = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(destination);
 
-                        nextAction = "process";
+                        //nextAction = "process";
                         break;
                     }
                     else {
@@ -183,7 +186,7 @@ public class Worker : MonoBehaviour
                         processPosition = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(destination);
 
-                        nextAction = "collect"; 
+                        //nextAction = "collect"; 
                         break;
                     }
                 }
@@ -205,7 +208,7 @@ public class Worker : MonoBehaviour
                     destination = gameObject.transform.position;
                     nmAgent.SetDestination(destination);
 
-                    nextAction = "decide";
+                    //nextAction = "decide";
                     break;
                 }
                 else {
@@ -216,7 +219,7 @@ public class Worker : MonoBehaviour
                         //destination = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(processPosition);
 
-                        nextAction = "deliver";
+                        //nextAction = "deliver";
                         break;
                     }
                     else {
@@ -235,13 +238,13 @@ public class Worker : MonoBehaviour
                     nmAgent.SetDestination(gameObject.transform.position);
                     
                     nextItem.gameObject.tag = "ActiveItem";
-                    nextAction = "process";
+                    //nextAction = "process";
                 }
                 break;
 
             case "process":
                 if (nextItem == null) {
-                    nextAction = "decide";
+                    //nextAction = "decide";
                     break;
                 }
                 else {
@@ -254,7 +257,7 @@ public class Worker : MonoBehaviour
                         destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
                         nmAgent.SetDestination(destination);
 
-                        nextAction = "decide";
+                        //nextAction = "decide";
                         break;
                     }
                     else {
