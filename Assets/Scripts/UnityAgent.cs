@@ -43,7 +43,12 @@ public class UnityAgent : Agent
 
     void Update()
     {
-        Debug.Log(destination);
+        // Run through the actionList
+        // if INITIATE: read the parameters and set to RUNNING
+        // if DROPPED: remove from actionList
+        // if RUNNING: perform the appropriate action
+
+        // note: this means one RUNNING action at a time
     }
 
     public static Vector3 StringToVector3(string sVector)
@@ -65,6 +70,8 @@ public class UnityAgent : Agent
          return result;
      }
 
+    // This is only used for when receiving messages from the agent's BDI model. 
+    // Could be target percept requests, or a new action to add to the actionList
     public override void Act(Message message)
     {
         try

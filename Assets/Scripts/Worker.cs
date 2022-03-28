@@ -1,3 +1,5 @@
+using ActressMas;
+
 using System;
 using System.Linq;
 using System.Threading;
@@ -29,7 +31,7 @@ public class Worker : MonoBehaviour
     private float wanderDistance = 7.5f;
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
-    private Agent agent;
+    public Agent agent;
 
     /* ------------------------------------- The BDI structures ------------------------------------- */
     // - Right now, not used

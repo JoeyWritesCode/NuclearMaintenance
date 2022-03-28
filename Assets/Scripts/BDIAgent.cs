@@ -9,29 +9,34 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 
+public class Action
+{
+    string indentifier;
+    List<string> parameters;
+    string state;
+
+    public Action(string _identifier, List<string> _parameters, string _state) {
+        identifier = _identifier;
+        parameters = _parameters;
+        state = _state;
+    }
+
+    private void setState(string newState) {
+        state = newState;
+    }
+
+    private string getState() {
+        return state;
+    }
+}
+
 public class BDIAgent : Agent
 { 
-    private Dictionary<string, Vector3> _beliefs;
-    private HashSet<string> _desires;
-    private string _intention; // only 1 intention active in this model
-    private string newIntention;
-    private List<string> _plan;
-    private bool _needToReplan;
-    private int _size;
-
-    private float travel_speed;
-    private float process_speed;
-
     public string _abm;
-    private Item next_item;
+    public List<Action> actionList;
 
-    private List<string> availableTasks;
-
-    public Vector3 destination;
-    public Vector3 position;
-    public string action;
-
-    private float distance_threshold = 1.0f;
+    private string currentPlan;
+    private string goal;
 
     public BDIAgent(string unityName)
     {
@@ -53,9 +58,6 @@ public class BDIAgent : Agent
         Debug.Log($"Starting {Name}");
 
         _size = Environment.Memory["Size"];
-
-        position = GameObject.Find(_abm).transform.position;
-        destination = Vector3.zero;
 
     }
 
@@ -100,9 +102,10 @@ public class BDIAgent : Agent
             Debug.Log($"\t{message.Format()}");
             message.Parse(out string action, out List<string> parameters);
 
+            // Can take 'percepts' or updates from the world, and sends Actions to the Worker object
             switch (action)
             {
-                case "start":
+                case "percepts":
                     Debug.Log("let's have a looksie");
                     BeliefRevision(parameters);
                     GenerateOptions();
@@ -111,6 +114,10 @@ public class BDIAgent : Agent
                         MakePlan();
                     ExecuteAction();
                     break;
+
+                // Current location
+
+                // 
 
                 case "travelling":
                     Send(message.Sender, "waiting");
@@ -146,6 +153,7 @@ public class BDIAgent : Agent
                     break;
 
                 default:
+                    // By default, we determine whether a change in plan is needed
                     break;
             }
         }

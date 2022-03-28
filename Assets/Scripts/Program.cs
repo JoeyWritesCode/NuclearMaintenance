@@ -40,10 +40,13 @@ public class Program : MonoBehaviour
             
             GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").transform.position, 10f), Quaternion.identity);
             agentObject.name = "abm_" + i;
+            agentObject.agent = new UnityAgent();
             
             var bdiAgent = new BDIAgent(agentObject.name);
             bdiAgent._abm = agentObject.name;
+            
             env.Add(bdiAgent, "bdi_" + i);
+            env.Add(agentObject.agent, agentObject.name);
         }
         
         env.Memory.Add("Size", 15);
