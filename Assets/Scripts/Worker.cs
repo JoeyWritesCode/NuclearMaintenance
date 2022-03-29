@@ -72,10 +72,7 @@ public class Worker : MonoBehaviour
         nextItem = null;
         destination = gameObject.transform.position;
 
-        nextAction = "decide";
         textPrompt = "decide";
-
-        inputActions = new List<string>(){"decide"};
     }
 
     // Update is called once per frame
@@ -89,7 +86,7 @@ public class Worker : MonoBehaviour
         }
         steps++;
         if (steps == stepsBetweenObservations) {
-            _beliefs = GetObjectsInRange(gameObject.transform.position);
+            _beliefs = GetObjectsInRange(gameObject.transform.position, "Item");
             steps = 0;
         }
         //Act();
@@ -102,14 +99,14 @@ public class Worker : MonoBehaviour
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
     /*                                       Auxiliary functions                                      */
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-    private Dictionary<string, Vector3> GetObjectsInRange(Vector3 position)
+    private Dictionary<string, Vector3> GetObjectsInRange(Vector3 position, string tag)
     {
         Dictionary<string, Vector3> seenObjects = new Dictionary<string, Vector3>();
 
         Collider[] hitColliders = Physics.OverlapSphere(position, visionDistance);
         foreach (var hitCollider in hitColliders)
         {
-            if (hitCollider.gameObject.tag == "Item") {
+            if (hitCollider.gameObject.tag == tag) {
                 seenObjects[hitCollider.gameObject.name] = hitCollider.gameObject.transform.position;
             }
         }
@@ -275,7 +272,7 @@ public class Worker : MonoBehaviour
     void DecideOnTask()
     {
         // List<string> availableTasks = new List<string>(_beliefs.Keys);
-        List<string> availableTasks = new List<string>(GetObjectsInRange(gameObject.transform.position).Keys);
+        List<string> availableTasks = new List<string>(GetObjectsInRange(gameObject.transform.position, "Item").Keys);
         availableTasks.OrderBy(name => TravelEffort(name));
 
         // We may get to the point where there are no more beliefs held.
@@ -325,5 +322,11 @@ public class Worker : MonoBehaviour
             nextItem = null;
             destination = Vector3.zero;
         }
+    }
+
+    public List<string> FindNearestAgents() {
+        List<string> agents = new List<string>(GetObjectsInRange(gameObject.transform.position, "Agent").Keys);
+        agents.Remove(gameObject.name);
+        return agents;
     }
 }

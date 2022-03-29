@@ -7,6 +7,7 @@ TagManager:
   - Item
   - HeldItem
   - ActiveItem
+  - Agent
   layers:
   - Default
   - TransparentFX

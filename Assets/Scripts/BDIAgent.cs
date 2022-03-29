@@ -14,48 +14,111 @@ public class BDIAgent : Agent
 { 
     public UnityAgent _abm;
     public List<WorldAction> actionList;
+    private WorldAction act;
 
     private string currentPlan;
     private string goal;
+    private string plan;
+
+    private Dictionary<string, List<string>> beliefs;
 
 
     public override void Setup()
     {
         Debug.Log($"Starting {Name}");
 
-        // add act to actionList
-        // send message to UnityAgent
+        beliefs = new Dictionary<string, List<string>>();
+        act = new WorldAction("ask-agent", null, "INITIATE");
+
+        Send(_abm.name, "Hello! decide");
 
     }
 
-    void UpdateAction()
+    void UpdatePercepts(List<Percept> percepts)
     {
+        foreach (Percept percept in percepts) {
+            beliefs[percept.identifier] = percept.value;
+        }
+    }
+
+    void MakePlan()
+    {
+        switch (plan) {
+            case "complete-task":
+                break;
+
+            case "ask-someone":
+                // tell abm agent to determine it's nearest agents, and ask each of them for their best task
+                break;
+        }
+    }
+
+
+    void GenerateAct()
+    {
+        switch (goal) {
+            case "minimize-time":
+                break;
+
+            case "find-task":
+                // determine next best task that it's observed
+                // if there are agents nearby, ask someone
+                break;
+
+            case "process-location":
+                break;
+
+            case "complete-task":
+                break;
+        }
+    }
+
+    void UpdateAct()
+    {
+        // This is where we encode all of the domain-specific rules that would lead to a change in action. 
+        // As a small recap, that's when the observations of the world:
+        /* ----------------------- - inform the agent that the action is completed ---------------------- */
+        /* ----------------- - lead the agent to believe it should switch GoalTree paths ---------------- */
+        /* ------------------- - inform the agent that the action can NOT be completed ------------------ */
+
         // if there is a new act suggested:
-            // if act.state == PASSED, then goal was achieved
+            
             // if act.state == FAIL or DROPPED, then goal was not acheived
         // remove act from actionList
-        Debug.Log("pass");
-    }
 
-    public static Vector3 StringToVector3(string sVector)
-    {
-        // Remove the parentheses
-        if (sVector.StartsWith ("(") && sVector.EndsWith (")")) {
-            sVector = sVector.Substring(1, sVector.Length-2);
+        WorldAction nextAct = act;
+
+        switch (act.GetIdentifier()) {
+            case "ask-agent":
+                if (beliefs.ContainsKey("nearest-agents")) {
+                    foreach (string agentName in beliefs["nearest-agents"]) {
+                        Debug.Log($"hello {agentName}!");
+                    }
+                    nextAct = new WorldAction("idle", null, null);
+                    break;
+                }
+                else {
+                    Send(_abm.name, "find-agents");
+                    break;
+                }
         }
 
-        // split the items
-        string[] sArray = sVector.Split(',');
-
-        // store as a Vector3
-        Vector3 result = new Vector3(
-            float.Parse(sArray[0]),
-            float.Parse(sArray[1]),
-            float.Parse(sArray[2]));
-
-        return result;
+        if (nextAct != act) {
+            switch (act.GetState()) {
+                case "PASSED":
+                    // if act.state == PASSED, then goal was achieved
+                    break;
+                case "FAIL":
+                    // if act.state == FAIL or DROPPED, then goal was not acheived
+                    break;
+                case "DROPPED":
+                    break;
+            }
+            actionList.Remove(act);
+            act = nextAct;
+        }
     }
-    
+
     // This message will be what informs this agent about the actions carried out.
     // Inevitably, we're going to need two agents.
     public override void Act(Message message)
@@ -70,17 +133,18 @@ public class BDIAgent : Agent
             {
                 case "percepts":
                     Debug.Log("let's have a looksie");
-                    UpdateAction();
+                    // need to be able to send Percepts instead of strings
+                    //UpdatePercepts(parameters);
+                    UpdateAct();
                     break;
 
-                case "nearest agents":
-                    break;
-
-                case "objects":
+                case "nearest-agents":
+                    beliefs["nearest-agents"] = parameters;
+                    UpdateAct();
                     break;
 
                 default:
-                    // By default, we determine whether a change in plan is needed
+                    UpdateAct();
                     break;
             }
         }

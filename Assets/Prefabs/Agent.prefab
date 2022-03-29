@@ -218,7 +218,7 @@ GameObject:
   - component: {fileID: 1924264425995430511}
   m_Layer: 0
   m_Name: Agent
-  m_TagString: Untagged
+  m_TagString: Agent
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -349,6 +349,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Hands: {fileID: 0}
   TextBox: {fileID: 6279815357748222392}
+  inputActions: []
+  nextAction: 
 --- !u!208 &1924264425995430511
 NavMeshObstacle:
   m_ObjectHideFlags: 0

@@ -16,17 +16,16 @@ public class UnityAgent : Agent
     public Worker worker;
     public List<WorldAction> actionList;
 
-    private List<string> actions;
+    public string name;
 
     //public BDIAgent _bdi;
 
 
     public override void Setup()
     {
-        Console.WriteLine($"Starting {Name}");
-        List<WorldAction> actionList = new List<WorldAction>();
-
-        actions = new List<string>(){"decide", "collect", "deliver"};
+        Debug.Log($"Starting {name}");
+        actionList = new List<WorldAction>();
+        //actions = new List<string>(){"decide", "collect", "deliver"};
     }
 
     // This is only used for when receiving messages from the agent's BDI model. 
@@ -40,10 +39,20 @@ public class UnityAgent : Agent
 
             switch (action)
             {
+                case "find-agents":
+                    //actionList.Add(new WorldAction(action, parameters, "INITIATE"));
+                    Send(message.Sender, "nearest-agents " + String.Join(" ", worker.FindNearestAgents()));
+                    EvaluateActionList();
+                    break;
+
+                case "Hello!":
+                    actionList.Add(new WorldAction(parameters, null, "INITIATE"));
+                    Send(message.Sender, "Hello to you too!");
+                    EvaluateActionList();
+                    break;
+                
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
                 default:
-                    actionList.Add(new WorldAction(actions.First(), null, "INITIATED"));
-                    actions.Remove(actions.First());
                     break;
             }
         }
@@ -52,12 +61,10 @@ public class UnityAgent : Agent
             Console.WriteLine(ex.Message);
             //Console.WriteLine(ex.ToString()); // for debugging
         }
+    }
 
-        Debug.Log("I'm alive!");
-
-        actionList.Add(new WorldAction(actions.First(), null, "INITIATED"));
-        actions.Remove(actions.First());
-
+    void EvaluateActionList()
+    {
         foreach (WorldAction action in actionList) {
             switch (action.GetState()) {
                 case "INITIATE":
@@ -70,7 +77,7 @@ public class UnityAgent : Agent
                     break;
                 case "RUNNING":
                     //worker.nextAction = action;
-                    Debug.Log(action);
+                    Debug.Log(action.GetIdentifier());
                     break;
                 default:
                     break;

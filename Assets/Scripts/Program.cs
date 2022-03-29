@@ -56,10 +56,12 @@ public class WorldAction
 
 public class Percept 
 {
-    private string identifier;
+    public string identifier;
+    public List<string> value;
 
-    public Percept(string _identifier, Vector3 _value) {
+    public Percept(string _identifier, List<string> _value) {
         identifier = _identifier;
+        value = _value;
     }
 }
 
@@ -73,7 +75,7 @@ public class Program : MonoBehaviour
 
     private EnvironmentMas env;
 
-    void Start() {
+    async void Start() {
         env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 5, randomOrder: false, parallel: false);
 
         for (int i = 0; i < numberOfAgents; i++) {
@@ -81,15 +83,16 @@ public class Program : MonoBehaviour
             GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").transform.position, 10f), Quaternion.identity);
             agentObject.name = "abm_" + i;
 
-            var unityAgent = new UnityAgent();
+            UnityAgent unityAgent = new UnityAgent();
             unityAgent.worker = agentObject.GetComponent<Worker>();
+            unityAgent.name = "unity_" + i;
             
-            //var bdiAgent = new BDIAgent(agentObject.name);
+            BDIAgent bdiAgent = new BDIAgent();
             
-            //bdiAgent._abm = unityAgent;
+            bdiAgent._abm = unityAgent;
             //unityAgent._bdi = bdiAgent;
             
-            //env.Add(bdiAgent, "bdi_" + i);
+            env.Add(bdiAgent, "bdi_" + i);
             env.Add(unityAgent, "unity_" + i);
         }
         
