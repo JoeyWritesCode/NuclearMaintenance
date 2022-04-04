@@ -32,7 +32,6 @@ public class Worker : MonoBehaviour
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
     public UnityAgent agent;
-    public List<string> inputActions;
 
     /* ------------------------------------- The BDI structures ------------------------------------- */
     // - Right now, not used
@@ -160,6 +159,7 @@ public class Worker : MonoBehaviour
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
     public void Act(WorldAction nextAction)
     {
+        UpdateTextBox(nextAction.GetIdentifier());
         switch (nextAction.GetIdentifier()) 
         {
             // Let's step this out for now...

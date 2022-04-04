@@ -20,12 +20,15 @@ public class BDIAgent : Agent
     private string goal;
     private string plan;
 
+    private string name;
+
     private Dictionary<string, List<string>> beliefs;
 
 
     public override void Setup()
     {
         Debug.Log($"Starting {Name}");
+        name = Name;
 
         beliefs = new Dictionary<string, List<string>>();
         act = new WorldAction("ask-agent", null, "INITIATE");
@@ -90,23 +93,29 @@ public class BDIAgent : Agent
 
         switch (act.GetIdentifier()) {
             case "ask-agent":
-                if (beliefs.ContainsKey("nearest-agents")) {
+                if (beliefs.ContainsKey("nearest-agents") && beliefs["nearest-agents"].Count > 0) {
                     foreach (string agentName in beliefs["nearest-agents"]) {
                         Debug.Log($"hello {agentName}!");
                     }
-                    nextAct = new WorldAction("idle", null, null);
+                    act.SetState("PASSED");
+                    nextAct = new WorldAction("decide", null, null);
                     break;
                 }
                 else {
                     Send(_abm.name, "find-agents");
                     break;
                 }
+
+            case "decide":
+                Send(_abm.name, "Hello! decide");
+                break;
         }
 
         if (nextAct != act) {
             switch (act.GetState()) {
                 case "PASSED":
                     // if act.state == PASSED, then goal was achieved
+                    Debug.Log($"Successfuly completed {act.GetIdentifier()}");
                     break;
                 case "FAIL":
                     // if act.state == FAIL or DROPPED, then goal was not acheived

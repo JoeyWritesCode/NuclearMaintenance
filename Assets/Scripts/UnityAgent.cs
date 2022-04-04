@@ -77,7 +77,8 @@ public class UnityAgent : Agent
                     break;
                 case "RUNNING":
                     //worker.nextAction = action;
-                    Debug.Log(action.GetIdentifier());
+                    Debug.Log($"I have {action.GetIdentifier()} to get to!");
+                    worker.Act(action);
                     break;
                 default:
                     break;
