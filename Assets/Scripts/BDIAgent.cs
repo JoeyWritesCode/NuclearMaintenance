@@ -31,9 +31,9 @@ public class BDIAgent : Agent
         name = Name;
 
         beliefs = new Dictionary<string, List<string>>();
-        act = new WorldAction("ask-agent", null, "INITIATE");
+        act = new WorldAction("decide", null, "INITIATE");
 
-        Send(_abm.name, "Hello! decide");
+        Send(_abm.name, "decide");
 
     }
 
@@ -76,6 +76,7 @@ public class BDIAgent : Agent
         }
     }
 
+    // Return: If there is a new 
     void UpdateAct()
     {
         // This is where we encode all of the domain-specific rules that would lead to a change in action. 
@@ -153,7 +154,6 @@ public class BDIAgent : Agent
                     break;
 
                 default:
-                    UpdateAct();
                     break;
             }
         }

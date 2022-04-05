@@ -25,6 +25,7 @@ public class Worker : MonoBehaviour
     private string lastPrompt;
 
     /* -------------------------------------- NavMesh variables ------------------------------------- */
+    private NavMeshSurface nmSurface;
     private NavMeshAgent nmAgent;
     private Vector3 destination;
     private Vector3 processPosition;
@@ -67,6 +68,7 @@ public class Worker : MonoBehaviour
         delivered = false;
 
         nmAgent = gameObject.GetComponent<NavMeshAgent>();
+        nmSurface = GameObject.Find("NavMesh").GetComponent<NavMeshSurface>();
         
         nextItem = null;
         destination = gameObject.transform.position;
@@ -88,7 +90,7 @@ public class Worker : MonoBehaviour
             _beliefs = GetObjectsInRange(gameObject.transform.position, "Item");
             steps = 0;
         }
-        //Act();
+        // Act();
     }
 
     void UpdateTextBox(string _textPrompt) {

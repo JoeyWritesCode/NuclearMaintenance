@@ -53,6 +53,8 @@ public class UnityAgent : Agent
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
                 default:
+                    actionList.Add(new WorldAction(action, null, "INITIATE"));
+                    EvaluateActionList();
                     break;
             }
         }
@@ -69,6 +71,7 @@ public class UnityAgent : Agent
             switch (action.GetState()) {
                 case "INITIATE":
                     // read the parameters. This will set the location and/or the next item.
+                    Debug.Log($"I have {action.GetIdentifier()} to get to!");
                     worker.Act(action);
                     action.SetState("RUNNING");
                     break;
@@ -77,7 +80,7 @@ public class UnityAgent : Agent
                     break;
                 case "RUNNING":
                     //worker.nextAction = action;
-                    Debug.Log($"I have {action.GetIdentifier()} to get to!");
+                    Debug.Log($"Continuing with {action.GetIdentifier()}");
                     worker.Act(action);
                     break;
                 default:

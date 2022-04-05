@@ -17,28 +17,22 @@ public class Item : MonoBehaviour
     private Renderer renderer;
 
     public static Vector3 processPosition;
+    private static GameObject processObject;
 
-    private Dictionary<string, Vector3> all_process_positions = new Dictionary<string, Vector3>{
-        {"Item", new Vector3(0f, 2.5f, 0f)},
-        {"AlsoAnItem", new Vector3(0f, 2.5f, 0f)}
+    public string itemName;
+
+    private Dictionary<string, List<string>> all_process_objects = new Dictionary<string, List<string>>{
+        {"WarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "10.0"}}
         };
 
     // Start is called before the first frame update
     void Start()
     {
         renderer = gameObject.GetComponent<Renderer>();
-        if (!all_process_positions.TryGetValue(gameObject.name, out processPosition)) {
-            
-            Color Red = new Color(255, 0, 0);
-            Color Blue = new Color(0, 0, 255);
-
-            if (renderer.material.GetColor("_Color") == Red)
-                processPosition = new Vector3(-10.0f, 2.5f, -1.5f);
-            else if (renderer.material.GetColor("_Color") == Blue)
-                processPosition = new Vector3(9.0f, 2.5f, -1.5f);
-            else
-                processPosition = new Vector3(0f, 2.5f, 0f);
-        }
+        List<string> processInformation = all_process_objects[itemName];
+        processObject = GameObject.Find(processInformation[0]);
+        total_time = float.Parse(processInformation[1]);
+        processPosition = processObject.transform.position;
         remaining_time = total_time;
     }
 
