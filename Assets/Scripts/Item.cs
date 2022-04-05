@@ -83,6 +83,9 @@ public class Item : MonoBehaviour
 
     public void complete()
     {
+        if (processObject.tag == "Store") {
+            processObject.GetComponent<Store>().Add(itemName);
+        }
         Debug.Log($"Destroying {gameObject.name}");
         Destroy(gameObject);
     }
