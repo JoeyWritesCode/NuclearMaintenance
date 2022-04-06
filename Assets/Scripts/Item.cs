@@ -19,12 +19,23 @@ public class Item : MonoBehaviour
     public static Vector3 processPosition;
     private static GameObject processObject;
 
+    public bool isEmpty = false;
     public string itemName;
 
-    private Dictionary<string, List<string>> objectsBelongWith = new Dictionary<string, List<string>>{
+    private Dictionary<string, List<string>> objectsBelongWith = new Dictionary<string, List<string>> {
         {"WarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "10.0"}},
-        {"CompletedWarhead", new List<string>{"StoreContainersWarheadTransit", "delivery"}}
+        {"CompletedWarhead", new List<string>{"StoreContainersWarheadTransit", "delivery"}},
+        {"WarheadContainer", new List<string>{"Disassembly", "delivery"}},
+        {"Warhead", new List<string>{"Disassembly", "delivery"}},
+        {"MaterialA", new List<string>{"StoreContainersMaterialA", "10.0"}}
         };
+
+    private Dictionary<string, List<string>> objectComponents = new Dictionary<string, List<string>> {
+        {"WarheadContainer", new List<string>{"Warhead"}},
+        {"Warhead", new List<string>{"MaterialA", "MaterialB", "NonFissle"}}
+        };
+
+    public List<string> inventory = new List<string>();
 
     // Start is called before the first frame update
     void Start()
@@ -89,25 +100,38 @@ public class Item : MonoBehaviour
         return gameObject.name;
     }
 
+    void EmptyContents()
+    {
+        foreach (string component in objectComponents[itemName]) {
+            var item = Resources.Load(component);
+            Instantiate(item);
+            inventory.Remove(component);
+        }
+    }
+
     public void complete()
     {
         // Items that are just being delivered have a process time of float.MinValue
+        // therefore if the remaining time is not that, the item needs to be stored somewhere
         if (remaining_time != float.MinValue) {
             if (processObject.tag == "Store") {
                 processObject.GetComponent<Store>().Add(itemName);
+                Destroy(gameObject);
             }
-            Debug.Log($"Destroying {gameObject.name}");
-            Destroy(gameObject);
         }
         else {
+        // in this case, a container is taken from the store and the current item is place in it
             if (processObject.tag == "Store") {
-
-                // If we're sporting around something to contain things in
-
                 Transform old_transform = gameObject.transform;
                 var container = Resources.Load(processObject.GetComponent<Store>().Pop());
-                Instantiate(container, old_transform);
-                Destroy(gameObject);
+                Item containerItem = (Item) Instantiate(container, old_transform);
+                containerItem.inventory.Add(itemName);
+            }
+            else {
+                if (objectComponents.ContainsKey(itemName))
+                    EmptyContents();
+                else
+                    Destroy(gameObject);
             }
         }
     }
