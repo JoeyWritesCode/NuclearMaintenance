@@ -21,17 +21,25 @@ public class Item : MonoBehaviour
 
     public string itemName;
 
-    private Dictionary<string, List<string>> all_process_objects = new Dictionary<string, List<string>>{
-        {"WarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "10.0"}}
+    private Dictionary<string, List<string>> objectsBelongWith = new Dictionary<string, List<string>>{
+        {"WarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "10.0"}},
+        {"CompletedWarhead", new List<string>{"StoreContainersWarheadTransit", "delivery"}}
         };
 
     // Start is called before the first frame update
     void Start()
     {
         renderer = gameObject.GetComponent<Renderer>();
-        List<string> processInformation = all_process_objects[itemName];
+        List<string> processInformation = objectsBelongWith[itemName];
         processObject = GameObject.Find(processInformation[0]);
-        total_time = float.Parse(processInformation[1]);
+
+        if (processInformation[1] == "delivery") {
+            total_time = float.MinValue;
+        }
+        else {
+            total_time = float.Parse(processInformation[1]);
+        }
+
         processPosition = processObject.transform.position;
         remaining_time = total_time;
     }
@@ -83,11 +91,25 @@ public class Item : MonoBehaviour
 
     public void complete()
     {
-        if (processObject.tag == "Store") {
-            processObject.GetComponent<Store>().Add(itemName);
+        // Items that are just being delivered have a process time of float.MinValue
+        if (remaining_time != float.MinValue) {
+            if (processObject.tag == "Store") {
+                processObject.GetComponent<Store>().Add(itemName);
+            }
+            Debug.Log($"Destroying {gameObject.name}");
+            Destroy(gameObject);
         }
-        Debug.Log($"Destroying {gameObject.name}");
-        Destroy(gameObject);
+        else {
+            if (processObject.tag == "Store") {
+
+                // If we're sporting around something to contain things in
+
+                Transform old_transform = gameObject.transform;
+                var container = Resources.Load(processObject.GetComponent<Store>().Pop());
+                Instantiate(container, old_transform);
+                Destroy(gameObject);
+            }
+        }
     }
 
     public bool isUnavailable()

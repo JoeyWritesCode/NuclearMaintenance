@@ -22,4 +22,15 @@ public class Store : MonoBehaviour
         Debug.Log($"A delicious {itemName}!");
         inventory.Add(itemName);
     }
+
+    public void Remove(string itemName) {
+        Debug.Log($"Begone, {itemName}!");
+        inventory.Remove(itemName);
+    }
+
+    public string Pop() {
+        string item = inventory[0];
+        inventory.RemoveAt(0);
+        return item;
+    }
 }

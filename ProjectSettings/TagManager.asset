@@ -9,6 +9,7 @@ TagManager:
   - ActiveItem
   - Agent
   - Store
+  - Facility
   layers:
   - Default
   - TransparentFX
