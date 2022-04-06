@@ -10,27 +10,36 @@ public class Item : MonoBehaviour
     private float total_time = 50.0f;
     private float remaining_time;
     private float days_per_step = 0.2f;
-    public float distance_threshold = 0.25f;
+    private float distance_threshold = 0.3f;
 
     private bool beingCarried = false;
 
     private Renderer renderer;
 
-    public static Vector3 processPosition;
-    private static GameObject processObject;
+    public Vector3 processPosition;
+    private GameObject processObject;
+    private List<string> processInformation;
 
     public bool isEmpty = false;
     public string itemName;
 
+    private string typeOfProcess;
+
     private Dictionary<string, List<string>> objectsBelongWith = new Dictionary<string, List<string>> {
-        {"WarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "10.0"}},
-        {"CompletedWarhead", new List<string>{"StoreContainersWarheadTransit", "delivery"}},
+        {"WarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "store"}},
         {"WarheadContainer", new List<string>{"Disassembly", "delivery"}},
         {"Warhead", new List<string>{"Disassembly", "delivery"}},
-        {"MaterialA", new List<string>{"StoreContainersMaterialA", "10.0"}}
+        {"MaterialA", new List<string>{"StoreContainersMaterialA", "merge"}},
+        {"MaterialAContainer", new List<string>{"StoreMaterialA", "store"}},
+        {"MaterialB", new List<string>{"StoreContainersMaterialB", "merge"}},
+        {"MaterialBContainer", new List<string>{"StoreMaterialB", "store"}},
+        {"NonFissle", new List<string>{"StoreContainersNonFissle", "merge"}},
+        {"NonFissleContainer", new List<string>{"StoreNonFissle", "store"}},
+        {"CompletedWarhead", new List<string>{"StoreContainersWarheadTransit", "merge"}},
         };
 
     private Dictionary<string, List<string>> objectComponents = new Dictionary<string, List<string>> {
+        {"WarheadTransitContainer", new List<string>{"WarheadContainer"}},
         {"WarheadContainer", new List<string>{"Warhead"}},
         {"Warhead", new List<string>{"MaterialA", "MaterialB", "NonFissle"}}
         };
@@ -44,11 +53,17 @@ public class Item : MonoBehaviour
         List<string> processInformation = objectsBelongWith[itemName];
         processObject = GameObject.Find(processInformation[0]);
 
-        if (processInformation[1] == "delivery") {
-            total_time = float.MinValue;
-        }
-        else {
-            total_time = float.Parse(processInformation[1]);
+        typeOfProcess = processInformation[1];
+        switch (typeOfProcess) {
+            case "delivery":
+                total_time = float.MinValue;
+                break;
+            case "store":
+                total_time = 5.0f;
+                break;
+            case "merge":
+                total_time = 10.0f;
+                break;
         }
 
         processPosition = processObject.transform.position;
@@ -106,33 +121,36 @@ public class Item : MonoBehaviour
             var item = Resources.Load(component);
             Instantiate(item);
             inventory.Remove(component);
+            isEmpty = true;
         }
     }
 
     public void complete()
     {
-        // Items that are just being delivered have a process time of float.MinValue
-        // therefore if the remaining time is not that, the item needs to be stored somewhere
-        if (remaining_time != float.MinValue) {
-            if (processObject.tag == "Store") {
-                processObject.GetComponent<Store>().Add(itemName);
-                Destroy(gameObject);
-            }
-        }
-        else {
-        // in this case, a container is taken from the store and the current item is place in it
-            if (processObject.tag == "Store") {
-                Transform old_transform = gameObject.transform;
-                var container = Resources.Load(processObject.GetComponent<Store>().Pop());
-                Item containerItem = (Item) Instantiate(container, old_transform);
-                containerItem.inventory.Add(itemName);
-            }
-            else {
-                if (objectComponents.ContainsKey(itemName))
+        switch (typeOfProcess) {
+            // Only singleton items can be stored. Therefore if task is to deliver the item, you
+            // must empty it's contents
+            case "delivery":
+                if (!isEmpty)
                     EmptyContents();
-                else
-                    Destroy(gameObject);
-            }
+                break;
+
+            // Spawn a new container from this store, and add the current item to it's inventory
+            case "merge":
+                var container = Resources.Load(itemName + "Container");
+                Instantiate(container, gameObject.transform.position, Quaternion.identity);
+                /* Debug.Log(containerName);
+                var container = Resources.Load(containerName);
+                GameObject containerItem = (GameObject) Instantiate(container, gameObject.transform.position, Quaternion.identity);
+                containerItem.GetComponent<Item>().inventory.Add(itemName); */
+                Destroy(gameObject);
+                break;
+
+            // Increment the store's occupancy
+            case "store":
+                processObject.GetComponent<Store>().Add();
+                Destroy(gameObject);
+                break;
         }
     }
 

@@ -4,33 +4,17 @@ using UnityEngine;
 
 public class Store : MonoBehaviour
 {
-    private List<string> inventory;
+    public string itemStored;
+    public int occupancy;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        inventory = new List<string>();
+    public void Add() {
+        Debug.Log($"A delicious {itemStored}!");
+        occupancy++;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    public void Add(string itemName) {
-        Debug.Log($"A delicious {itemName}!");
-        inventory.Add(itemName);
-    }
-
-    public void Remove(string itemName) {
-        Debug.Log($"Begone, {itemName}!");
-        inventory.Remove(itemName);
-    }
-
-    public string Pop() {
-        string item = inventory[0];
-        inventory.RemoveAt(0);
-        return item;
+    public string Remove() {
+        Debug.Log($"Begone, {itemStored}!");
+        occupancy--;
+        return itemStored;
     }
 }
