@@ -53,6 +53,7 @@ public class SimpleWorker : MonoBehaviour
     private bool isCarrying;
     private bool delivered;
     private string nextAction = "decide";
+    public string taskToStart = null;
 
     /* ------------------------------------ Simulation parameters ----------------------------------- */
     private int stepsBetweenObservations = 5;

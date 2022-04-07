@@ -121,18 +121,18 @@ public class Item : MonoBehaviour
             var item = Resources.Load(component);
             Instantiate(item);
             inventory.Remove(component);
-            isEmpty = true;
         }
     }
 
     public void complete()
-    {
+    {        
         switch (typeOfProcess) {
             // Only singleton items can be stored. Therefore if task is to deliver the item, you
             // must empty it's contents
             case "delivery":
                 if (!isEmpty)
                     EmptyContents();
+                Destroy(gameObject);
                 break;
 
             // Spawn a new container from this store, and add the current item to it's inventory
@@ -149,6 +149,7 @@ public class Item : MonoBehaviour
             // Increment the store's occupancy
             case "store":
                 processObject.GetComponent<Store>().Add();
+
                 Destroy(gameObject);
                 break;
         }
