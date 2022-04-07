@@ -26,8 +26,10 @@ public class Item : MonoBehaviour
     private string typeOfProcess;
 
     private Dictionary<string, List<string>> objectsBelongWith = new Dictionary<string, List<string>> {
-        {"WarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "store"}},
-        {"WarheadContainer", new List<string>{"Disassembly", "delivery"}},
+        {"WarheadTransitContainer", new List<string>{"GoodsInOut", "delivery"}},
+        {"EmptyWarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "store"}},
+        {"WarheadContainer", new List<string>{"StoreWarhead", "store"}},
+        {"EmptyWarheadContainer", new List<string>{"StoreContainersWarhead", "store"}},
         {"Warhead", new List<string>{"Disassembly", "delivery"}},
         {"MaterialA", new List<string>{"StoreContainersMaterialA", "merge"}},
         {"MaterialAContainer", new List<string>{"StoreMaterialA", "store"}},
@@ -35,6 +37,7 @@ public class Item : MonoBehaviour
         {"MaterialBContainer", new List<string>{"StoreMaterialB", "store"}},
         {"NonFissle", new List<string>{"StoreContainersNonFissle", "merge"}},
         {"NonFissleContainer", new List<string>{"StoreNonFissle", "store"}},
+        {"EmptyWarhead", new List<string>{"StoreNonFissle", "store"}},
         {"CompletedWarhead", new List<string>{"StoreContainersWarheadTransit", "merge"}},
         };
 
@@ -68,6 +71,9 @@ public class Item : MonoBehaviour
 
         processPosition = processObject.transform.position;
         remaining_time = total_time;
+
+        if (itemName.StartsWith("Empty"))
+            isEmpty = true;
     }
 
     void Update()
@@ -119,20 +125,28 @@ public class Item : MonoBehaviour
     {
         foreach (string component in objectComponents[itemName]) {
             var item = Resources.Load(component);
-            Instantiate(item);
+            Instantiate(item, gameObject.transform.position, Quaternion.identity);
             inventory.Remove(component);
         }
+
+        // For now, destroy Warheads after disassembling them.
+        // We're going to need to announce this later - and potentially pass it to maintenance
+        if (itemName != "Warhead") {
+            var emptyItem = Resources.Load("Empty" + itemName);
+            Instantiate(emptyItem, gameObject.transform.position, Quaternion.identity);
+        }
+        Destroy(gameObject);
     }
 
     public void complete()
     {        
+        gameObject.tag = "Item";
         switch (typeOfProcess) {
             // Only singleton items can be stored. Therefore if task is to deliver the item, you
             // must empty it's contents
             case "delivery":
                 if (!isEmpty)
                     EmptyContents();
-                Destroy(gameObject);
                 break;
 
             // Spawn a new container from this store, and add the current item to it's inventory

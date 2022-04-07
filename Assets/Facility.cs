@@ -11,6 +11,11 @@ public class Facility : MonoBehaviour
     private int amountOfTasksInProgress;
     private int lastAmountOfTasks;
 
+    private int transitionTasks = 0;
+
+    public FacilityAgent agent;
+    private List<string> localFreeAgents;
+
     bool m_Started;
     public LayerMask m_LayerMask;
 
@@ -18,6 +23,7 @@ public class Facility : MonoBehaviour
     {
         //Use this to ensure that the Gizmos are being drawn when in Play Mode.
         m_Started = true;
+        localFreeAgents = new List<string>();
     }
 
     public string GetName()
@@ -40,7 +46,12 @@ public class Facility : MonoBehaviour
             if (hit.tag == "Item" || hit.tag == "HeldItem" || hit.tag == "ActiveItem")
                 if (inputItems.Contains(hit.gameObject.GetComponent<Item>().itemName))
                     i++;
+            
+            // May as well keep track of agents in here too
+            if (hit.tag == "Agent" && hit.GetComponent<SimpleWorker>().GetNextAction() == "decide")
+                localFreeAgents.Add(hit.name);
         }
+
         if (i > 0) {
             amountOfTasksInProgress = Convert.ToInt32(Math.Ceiling( (double) i / amountOfComponents));
         }
@@ -50,7 +61,8 @@ public class Facility : MonoBehaviour
         Debug.Log($"We have {i} interesting objects, and {amountOfTasksInProgress} tasks going on!");
 
         if (amountOfTasksInProgress < lastAmountOfTasks) {
-            Debug.Log($"Ready for {nextPhase}!");    
+            Debug.Log($"Ready for {nextPhase}!"); 
+            agent.InformAgents(localFreeAgents, nextPhase);
         }
         lastAmountOfTasks = amountOfTasksInProgress;
         
@@ -65,11 +77,4 @@ public class Facility : MonoBehaviour
             //Draw a cube where the OverlapBox is (positioned where your GameObject is as well as a size)
             Gizmos.DrawWireCube(transform.position, transform.localScale);
     }
-
-/*     void OnTriggerEnter(Collider col)
-    {
-        if (col.gameObject.name == inputItem) {
-            Debug.Log($"Squak! I spy a {col.gameObject.name}!");
-        }
-    } */
 }

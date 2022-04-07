@@ -80,13 +80,16 @@ public class Program : MonoBehaviour
 
         for (int i = 0; i < numberOfAgents; i++) {
             
-            GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").transform.position, 10f), Quaternion.identity);
-            agentObject.name = "Worker_" + i;
+            //GameObject agentObject = Instantiate(agentPrefab, GetRandomPoint(GameObject.Find("Floor").transform.position, 10f), Quaternion.identity);
+            GameObject agentObject = Instantiate(agentPrefab, GameObject.Find("GoodsInOut").transform.position, Quaternion.identity);
+            agentObject.name = "Agent_" + i;
 
             SimpleAgent agent = new SimpleAgent();
             agent.worker = agentObject.GetComponent<SimpleWorker>();
+            agent.name = "Agent_" + i;
 
-            FacilityAgent disassemblyAgent = new FacilityAgent();
+            FacilityAgent inOutAgent = new FacilityAgent();
+            GameObject.Find("GoodsInOut").GetComponent<Facility>().agent = inOutAgent;
 
             /* UnityAgent unityAgent = new UnityAgent();
             unityAgent.worker = agentObject.GetComponent<SimpleWorker>();
@@ -99,7 +102,7 @@ public class Program : MonoBehaviour
             env.Add(bdiAgent, "bdi_" + i);
             env.Add(unityAgent, "unity_" + i); */
             env.Add(agent, "Agent_" + i);
-            env.Add(disassemblyAgent, "Disassembly");
+            env.Add(inOutAgent, "GoodsInOut");
         }
         
         env.Memory.Add("Size", 15);

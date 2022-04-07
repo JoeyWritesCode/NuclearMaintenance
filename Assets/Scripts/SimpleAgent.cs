@@ -34,12 +34,13 @@ public class SimpleAgent : Agent
 
             switch (action)
             {
-                case "Item disassembled":
+                case "Disassembly":
+                    worker.SetDestination(GameObject.Find("StoreWarhead").transform.position);
+                    worker.SetNextAction("setup disassembly");
                     break;
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
-                default:
-                    DetermineMessage();
+                default:                    
                     break;
             }
         }
@@ -48,21 +49,7 @@ public class SimpleAgent : Agent
             Console.WriteLine(ex.Message);
             //Console.WriteLine(ex.ToString()); // for debugging
         }
-    }
 
-    void DetermineMessage()
-    {
-        switch (worker.taskToStart) {
-            case null:
-                break;
-            
-            case "disassembly":
-                Send("Disassembly", "begin");
-                worker.taskToStart = null;
-                break;
-
-            default:
-                break;
-        }
+        //worker.Act();
     }
 }

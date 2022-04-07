@@ -12,11 +12,9 @@ using UnityEngine.AI;
 public class FacilityAgent : Agent
 {
 
-    public GameObject facility;
-
     public override void Setup()
     {
-        Debug.Log($"{facility.gameObject.name} is ready to assign work!");
+        Debug.Log($"{Name} is ready to assign work!");
     }
 
     // This is only used for when receiving messages from the agent's BDI model. 
@@ -44,5 +42,11 @@ public class FacilityAgent : Agent
             Console.WriteLine(ex.Message);
             //Console.WriteLine(ex.ToString()); // for debugging
         }
+    }
+
+    public void InformAgents(List<string> agents, string phase)
+    {
+        // Send the transition task to all agents deciding
+        SendToMany(agents, phase);
     }
 }

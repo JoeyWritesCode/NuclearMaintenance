@@ -139,6 +139,14 @@ public class SimpleWorker : MonoBehaviour
         return (locationTwo - locationOne).magnitude <= minimumDistance;
     }
 
+    public string GetNextAction() {
+        return nextAction;
+    }
+
+    public void SetNextAction(string _nextAction) {
+        nextAction = _nextAction;
+    }
+
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
     /*                                GameObject interaction functions                                */
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -265,6 +273,18 @@ public class SimpleWorker : MonoBehaviour
                     }
                 }
 
+            case "setup disassembly":
+                if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
+                    string itemName = GameObject.Find("StoreWarhead").GetComponent<Store>().Remove();
+                    GameObject item = (GameObject) Instantiate(Resources.Load(itemName), gameObject.transform.position, Quaternion.identity);
+
+                    nextItem = item.GetComponent<Item>();
+                    processPosition = GameObject.Find("Disassembly").transform.position;
+                    nextAction = "collect";
+                }
+                break;
+
+
             default:
                 break;
         }
@@ -325,9 +345,15 @@ public class SimpleWorker : MonoBehaviour
         }
     }
 
+
     public List<string> FindNearestAgents() {
         List<string> agents = new List<string>(GetObjectsInRange(gameObject.transform.position, "Agent").Keys);
         agents.Remove(gameObject.name);
         return agents;
+    }
+
+    public void SetDestination(Vector3 _destination) {
+        destination = _destination;
+        nmAgent.SetDestination(_destination);
     }
 }
