@@ -88,9 +88,6 @@ public class Program : MonoBehaviour
             agent.worker = agentObject.GetComponent<SimpleWorker>();
             agent.name = "Agent_" + i;
 
-            FacilityAgent inOutAgent = new FacilityAgent();
-            GameObject.Find("GoodsInOut").GetComponent<Facility>().agent = inOutAgent;
-
             /* UnityAgent unityAgent = new UnityAgent();
             unityAgent.worker = agentObject.GetComponent<SimpleWorker>();
             unityAgent.name = "unity_" + i;
@@ -102,8 +99,15 @@ public class Program : MonoBehaviour
             env.Add(bdiAgent, "bdi_" + i);
             env.Add(unityAgent, "unity_" + i); */
             env.Add(agent, "Agent_" + i);
-            env.Add(inOutAgent, "GoodsInOut");
         }
+
+        FacilityAgent inOutAgent = new FacilityAgent();
+        GameObject.Find("GoodsInOut").GetComponent<Facility>().agent = inOutAgent;
+        env.Add(inOutAgent, "GoodsInOut");
+
+        FacilityAgent disassemblyAgent = new FacilityAgent();
+        GameObject.Find("Disassembly").GetComponent<Facility>().agent = disassemblyAgent;
+        env.Add(disassemblyAgent, "Disassembly");
         
         env.Memory.Add("Size", 15);
 

@@ -13,8 +13,13 @@ public class Store : MonoBehaviour
     }
 
     public string Remove() {
-        Debug.Log($"Begone, {itemStored}!");
-        occupancy--;
-        return itemStored;
+        if (occupancy > 0) {
+            Debug.Log($"Begone, {itemStored}!");
+            occupancy--;
+            return itemStored;
+        }
+        else {
+            return "empty";
+        }
     }
 }

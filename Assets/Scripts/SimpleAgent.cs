@@ -22,7 +22,7 @@ public class SimpleAgent : Agent
     {
         Debug.Log($"Starting {name}");
     }
-
+ 
     // This is only used for when receiving messages from the agent's BDI model. 
     // Could be target percept requests, or a new action to add to the actionList
     public override void Act(Message message)
@@ -36,7 +36,16 @@ public class SimpleAgent : Agent
             {
                 case "Disassembly":
                     worker.SetDestination(GameObject.Find("StoreWarhead").transform.position);
-                    worker.SetNextAction("setup disassembly");
+                    worker.transitionStore = "StoreWarhead";
+                    worker.transitionDestination = "Disassembly";
+                    worker.SetNextAction("retrieve");
+                    break;
+
+                case "Recycling":
+                    worker.SetDestination(GameObject.Find("StoreMaterialA").transform.position);
+                    worker.transitionStore = "StoreMaterialA";
+                    worker.transitionDestination = "RecycleA";
+                    worker.SetNextAction("retrieve");
                     break;
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks

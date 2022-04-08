@@ -43,9 +43,11 @@ public class Facility : MonoBehaviour
         Collider[] hitColliders = Physics.OverlapBox(gameObject.transform.position, transform.localScale / 2, Quaternion.identity, m_LayerMask);
         int i = 0;
         foreach (Collider hit in hitColliders) {
-            if (hit.tag == "Item" || hit.tag == "HeldItem" || hit.tag == "ActiveItem")
-                if (inputItems.Contains(hit.gameObject.GetComponent<Item>().itemName))
+            if (hit.tag == "Item" || hit.tag == "HeldItem" || hit.tag == "ActiveItem") {
+                Item item = hit.gameObject.GetComponent<Item>();
+                if (inputItems.Contains(item.itemName) && !item.isTransitioning)
                     i++;
+            }
             
             // May as well keep track of agents in here too
             if (hit.tag == "Agent" && hit.GetComponent<SimpleWorker>().GetNextAction() == "decide")
@@ -60,11 +62,17 @@ public class Facility : MonoBehaviour
 
         Debug.Log($"We have {i} interesting objects, and {amountOfTasksInProgress} tasks going on!");
 
+        // Kinda a weird way of organizing it...
         if (amountOfTasksInProgress < lastAmountOfTasks) {
-            Debug.Log($"Ready for {nextPhase}!"); 
-            agent.InformAgents(localFreeAgents, nextPhase);
+            if (localFreeAgents.Count > 0) {
+                Debug.Log($"Ready for {nextPhase}!"); 
+                agent.InformAgents(localFreeAgents, nextPhase);
+                lastAmountOfTasks = amountOfTasksInProgress;
+            }
         }
-        lastAmountOfTasks = amountOfTasksInProgress;
+        else {
+            lastAmountOfTasks = amountOfTasksInProgress;
+        }
         
     }
 

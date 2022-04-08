@@ -12,6 +12,11 @@ using UnityEngine.AI;
 public class FacilityAgent : Agent
 {
 
+    private List<string> localAgents;
+    private List<string> transitionActions;
+
+    private string phase;
+
     public override void Setup()
     {
         Debug.Log($"{Name} is ready to assign work!");
@@ -29,7 +34,12 @@ public class FacilityAgent : Agent
             switch (action)
             {
                     // reply to begin next phase
-                case "begin":
+                case "accept":
+                    break;
+
+                case "reject":
+                    localAgents.RemoveAt(0);
+                    Send(localAgents[0], phase);
                     break;
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
@@ -44,9 +54,11 @@ public class FacilityAgent : Agent
         }
     }
 
-    public void InformAgents(List<string> agents, string phase)
+    public void InformAgents(List<string> agents, string _phase)
     {
         // Send the transition task to all agents deciding
-        SendToMany(agents, phase);
+        localAgents = agents;
+        phase = _phase;
+        Send(localAgents[0], phase);
     }
 }

@@ -54,6 +54,8 @@ public class SimpleWorker : MonoBehaviour
     private bool delivered;
     private string nextAction = "decide";
     public string taskToStart = null;
+    public string transitionStore;
+    public string transitionDestination;
 
     /* ------------------------------------ Simulation parameters ----------------------------------- */
     private int stepsBetweenObservations = 5;
@@ -238,7 +240,7 @@ public class SimpleWorker : MonoBehaviour
                 Debug.Log($"We're on our way to {processPosition} to deliver {nextItem.GetName()}");
                 //Debug.Log((processPosition - gameObject.transform.position).magnitude);
 
-                if ((processPosition - gameObject.transform.position).magnitude <= grabDistance) {
+                if (Math.Abs(processPosition.x - gameObject.transform.position.x) <= grabDistance && Math.Abs(processPosition.z - gameObject.transform.position.z) <= grabDistance) {
                     DeliverItem();
                     
                     nmAgent.SetDestination(gameObject.transform.position);
@@ -273,17 +275,20 @@ public class SimpleWorker : MonoBehaviour
                     }
                 }
 
-            case "setup disassembly":
+            case "retrieve":
                 if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
-                    string itemName = GameObject.Find("StoreWarhead").GetComponent<Store>().Remove();
-                    GameObject item = (GameObject) Instantiate(Resources.Load(itemName), gameObject.transform.position, Quaternion.identity);
+                    string itemName = GameObject.Find(transitionStore).GetComponent<Store>().Remove();
+                    if (itemName != "empty") {
+                        GameObject item = (GameObject) Instantiate(Resources.Load(itemName), gameObject.transform.position, Quaternion.identity);
 
-                    nextItem = item.GetComponent<Item>();
-                    processPosition = GameObject.Find("Disassembly").transform.position;
+                        nextItem = item.GetComponent<Item>();
+                        nextItem.isTransitioning = true;
+                        processPosition = GameObject.Find(transitionDestination).transform.position;
+                        nextItem.SetProcessType("delivery");
+                    }
                     nextAction = "collect";
                 }
                 break;
-
 
             default:
                 break;

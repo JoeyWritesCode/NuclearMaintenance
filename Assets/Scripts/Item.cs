@@ -21,6 +21,7 @@ public class Item : MonoBehaviour
     private List<string> processInformation;
 
     public bool isEmpty = false;
+    public bool isTransitioning = false;
     public string itemName;
 
     private string typeOfProcess;
@@ -115,6 +116,23 @@ public class Item : MonoBehaviour
         Debug.Log($"The distance between {gameObject.name} and it's process position {processPosition} is {distance}. In order to be delivered, it must be less than {distance_threshold}");
         return (processPosition - gameObject.transform.position).magnitude <= distance_threshold;
     }
+    public void SetProcessType(string _type)
+    {
+        typeOfProcess = _type;
+        switch (typeOfProcess) {
+            case "delivery":
+                total_time = float.MinValue;
+                break;
+            case "store":
+                total_time = 5.0f;
+                break;
+            case "merge":
+                total_time = 10.0f;
+                break;
+        }
+        remaining_time = total_time;
+    }
+
 
     public string GetName()
     {
@@ -141,6 +159,11 @@ public class Item : MonoBehaviour
     public void complete()
     {        
         gameObject.tag = "Item";
+        
+        // Bit of a weird temporary fix... Will have to think about this later
+        if (isTransitioning)
+            typeOfProcess = "delivery";
+
         switch (typeOfProcess) {
             // Only singleton items can be stored. Therefore if task is to deliver the item, you
             // must empty it's contents
