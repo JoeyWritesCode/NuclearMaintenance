@@ -101,9 +101,9 @@ public class Program : MonoBehaviour
             env.Add(agent, "Agent_" + i);
         }
 
-        FacilityAgent inOutAgent = new FacilityAgent();
+        /* FacilityAgent inOutAgent = new FacilityAgent();
         GameObject.Find("GoodsInOut").GetComponent<Facility>().agent = inOutAgent;
-        env.Add(inOutAgent, "GoodsInOut");
+        env.Add(inOutAgent, "GoodsInOut"); */
 
         FacilityAgent disassemblyAgent = new FacilityAgent();
         GameObject.Find("Disassembly").GetComponent<Facility>().agent = disassemblyAgent;
@@ -116,6 +116,14 @@ public class Program : MonoBehaviour
         env.Memory.Add("Size", 15);
 
         step = 0;
+
+        // Test me first!
+        RunTests();
+    }
+
+    void RunTests() 
+    {
+        GameObject.Find("StoreContainersMaterialA").GetComponent<Store>().Remove();
     }
 
     async void Update()

@@ -54,11 +54,11 @@ public class FacilityAgent : Agent
         }
     }
 
-    public void InformAgents(List<string> agents, string _phase)
+    public void InformAgents(List<string> agents, string _phase, string targetItem)
     {
         // Send the transition task to all agents deciding
         localAgents = agents;
         phase = _phase;
-        Send(localAgents[0], phase);
+        Send(localAgents[0], $"{phase} {targetItem}");
     }
 }

@@ -15,6 +15,7 @@ using ActressMas;
 
 public class SimpleWorker : MonoBehaviour
 {
+
     /* ----------------------------- The GameObject used for picking up ----------------------------- */
     // - Could we just use the Worker as the parent object, with a small offset?
     public GameObject Hands;
@@ -193,12 +194,27 @@ public class SimpleWorker : MonoBehaviour
                         break;
                     }
                     else {
-                        destination = nextItem.GetPosition();
-                        processPosition = nextItem.GetProcessPosition();
-                        nmAgent.SetDestination(destination);
+                        if (nextItem.itemName.StartsWith("Material")) {
+                            // Retrieve the relevant container from the store
+                            // Bring it here and merge the two
+                            transitionStore = "StoreContainersMaterial" + nextItem.itemName[8];
+                            destination = GameObject.Find(transitionStore).transform.position;
+                            transitionDestination = nextItem.name;
+                            nmAgent.SetDestination(destination);
 
-                        nextAction = "collect"; 
-                        break;
+                            // Just to make sure no one else scoops it up
+                            nextItem.gameObject.tag = "ActiveItem";
+                            nextAction = "retrieve";
+                            break;
+                        }
+                        else {
+                            destination = nextItem.GetPosition();
+                            processPosition = nextItem.GetProcessPosition();
+                            nmAgent.SetDestination(destination);
+
+                            nextAction = "collect"; 
+                            break;
+                        }
                     }
                 }
                 else {
@@ -280,12 +296,14 @@ public class SimpleWorker : MonoBehaviour
 
             case "retrieve":
                 if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
+                    Debug.Log($"Finally! Phew! Let's empty this {transitionStore}");
                     string itemName = GameObject.Find(transitionStore).GetComponent<Store>().Remove();
                     if (itemName != "empty") {
                         GameObject item = (GameObject) Instantiate(Resources.Load(itemName), gameObject.transform.position, Quaternion.identity);
 
                         nextItem = item.GetComponent<Item>();
                         nextItem.isTransitioning = true;
+                        Debug.Log($"I will now go to {transitionDestination}!");
                         processPosition = GameObject.Find(transitionDestination).transform.position;
                         nextItem.SetProcessType("delivery");
                     }

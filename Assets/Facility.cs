@@ -6,6 +6,8 @@ using UnityEngine;
 public class Facility : MonoBehaviour
 {
     public List<string> inputItems; 
+    private string targetObject;
+
     public int amountOfComponents;
     public string nextPhase;
     private int amountOfTasksInProgress;
@@ -46,6 +48,7 @@ public class Facility : MonoBehaviour
             if (hit.tag == "Item" || hit.tag == "HeldItem" || hit.tag == "ActiveItem") {
                 Item item = hit.gameObject.GetComponent<Item>();
                 if (inputItems.Contains(item.itemName) && !item.isTransitioning)
+                    targetObject = hit.name;
                     i++;
             }
             
@@ -66,7 +69,7 @@ public class Facility : MonoBehaviour
         if (amountOfTasksInProgress < lastAmountOfTasks) {
             if (localFreeAgents.Count > 0) {
                 Debug.Log($"Ready for {nextPhase}!"); 
-                agent.InformAgents(localFreeAgents, nextPhase);
+                agent.InformAgents(localFreeAgents, nextPhase, targetObject);
                 lastAmountOfTasks = amountOfTasksInProgress;
             }
         }
