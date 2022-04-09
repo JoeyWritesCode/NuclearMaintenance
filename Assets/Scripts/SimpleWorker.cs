@@ -29,6 +29,7 @@ public class SimpleWorker : MonoBehaviour
     private Vector3 destination;
     private Vector3 processPosition;
     private float wanderDistance = 7.5f;
+    private Vector3 infinity = new Vector3(Single.PositiveInfinity, Single.PositiveInfinity, Single.PositiveInfinity);
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
     public UnityAgent agent;
@@ -129,12 +130,14 @@ public class SimpleWorker : MonoBehaviour
         // Get Random Point inside Sphere which position is center, radius is maxDistance
         Vector3 randomPos = UnityEngine.Random.insideUnitSphere * maxDistance + center;
 
-        NavMeshHit hit; // NavMesh Sampling Info Container
+        NavMeshHit hit = new NavMeshHit(); // NavMesh Sampling Info Container
 
         // from randomPos find a nearest point on NavMesh surface in range of maxDistance
         NavMesh.SamplePosition(randomPos, out hit, maxDistance, NavMesh.AllAreas);
-
-        return hit.position;
+        if (hit.position != infinity)
+            return hit.position;
+        else
+            return GetRandomPoint(center, maxDistance);
     }
 
     bool isCloseTo(Vector3 locationOne, Vector3 locationTwo, float minimumDistance) {
