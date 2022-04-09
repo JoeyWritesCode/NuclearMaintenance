@@ -108,6 +108,10 @@ public class Program : MonoBehaviour
         FacilityAgent disassemblyAgent = new FacilityAgent();
         GameObject.Find("Disassembly").GetComponent<Facility>().agent = disassemblyAgent;
         env.Add(disassemblyAgent, "Disassembly");
+
+        FacilityAgent storageA = new FacilityAgent();
+        GameObject.Find("StorageA").GetComponent<Facility>().agent = storageA;
+        env.Add(storageA, "StorageA");
         
         env.Memory.Add("Size", 15);
 

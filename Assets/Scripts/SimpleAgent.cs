@@ -41,7 +41,7 @@ public class SimpleAgent : Agent
                     worker.SetNextAction("retrieve");
                     break;
 
-                case "Recycling":
+                case "RecycleA":
                     worker.SetDestination(GameObject.Find("StoreMaterialA").transform.position);
                     worker.transitionStore = "StoreMaterialA";
                     worker.transitionDestination = "RecycleA";

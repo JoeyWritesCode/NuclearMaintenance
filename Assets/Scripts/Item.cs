@@ -18,7 +18,7 @@ public class Item : MonoBehaviour
 
     public Vector3 processPosition;
     private GameObject processObject;
-    private List<string> processInformation;
+    public List<string> processInformation;
 
     public bool isEmpty = false;
     public bool isTransitioning = false;
@@ -45,7 +45,8 @@ public class Item : MonoBehaviour
     private Dictionary<string, List<string>> objectComponents = new Dictionary<string, List<string>> {
         {"WarheadTransitContainer", new List<string>{"WarheadContainer"}},
         {"WarheadContainer", new List<string>{"Warhead"}},
-        {"Warhead", new List<string>{"MaterialA", "MaterialB", "NonFissle"}}
+        {"Warhead", new List<string>{"MaterialA", "MaterialB", "NonFissle"}},
+        {"MaterialAContainer", new List<string>{"MaterialA"}}
         };
 
     public List<string> inventory = new List<string>();
@@ -54,7 +55,7 @@ public class Item : MonoBehaviour
     void Start()
     {
         renderer = gameObject.GetComponent<Renderer>();
-        List<string> processInformation = objectsBelongWith[itemName];
+        processInformation = objectsBelongWith[itemName];
         processObject = GameObject.Find(processInformation[0]);
 
         typeOfProcess = processInformation[1];
