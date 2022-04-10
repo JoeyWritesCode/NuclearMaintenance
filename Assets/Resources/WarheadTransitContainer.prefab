@@ -111,9 +111,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
   processPosition: {x: 0, y: 0, z: 0}
+  processInformation: []
   isEmpty: 0
+  isTransitioning: 0
   itemName: WarheadTransitContainer
-  inventory: []
+  inventory:
+  - {fileID: 2981426642777426598, guid: 63a93c870ab3a451bb40ff4fda96bff4, type: 3}
 --- !u!54 &2195566560203837966
 Rigidbody:
   m_ObjectHideFlags: 0

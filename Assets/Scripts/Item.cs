@@ -16,6 +16,8 @@ public class Item : MonoBehaviour
 
     private Renderer renderer;
 
+/* ----------- Change all these to public variables. That way they can be incremented ----------- */
+
     public Vector3 processPosition;
     private GameObject processObject;
     public List<string> processInformation;
@@ -34,6 +36,7 @@ public class Item : MonoBehaviour
         {"Warhead", new List<string>{"Disassembly", "delivery"}},
         {"MaterialA", new List<string>{"StoreContainersMaterialA", "merge"}},
         {"MaterialAContainer", new List<string>{"StoreMaterialA", "store"}},
+        {"EmptyMaterialAContainer", new List<string>{"MaterialA", "scoop"}},
         {"MaterialB", new List<string>{"StoreContainersMaterialB", "merge"}},
         {"MaterialBContainer", new List<string>{"StoreMaterialB", "store"}},
         {"NonFissle", new List<string>{"StoreContainersNonFissle", "merge"}},
@@ -49,14 +52,17 @@ public class Item : MonoBehaviour
         {"MaterialAContainer", new List<string>{"MaterialA"}}
         };
 
-    public List<string> inventory = new List<string>();
+    public List<GameObject> inventory;
 
     // Start is called before the first frame update
     void Start()
     {
         renderer = gameObject.GetComponent<Renderer>();
         processInformation = objectsBelongWith[itemName];
-        processObject = GameObject.Find(processInformation[0]);
+        if (inventory.Count == 0)
+            processObject = 
+        else
+            processObject = GameObject.Find(processInformation[0]);
 
         typeOfProcess = processInformation[1];
         switch (typeOfProcess) {
@@ -142,8 +148,9 @@ public class Item : MonoBehaviour
 
     void EmptyContents()
     {
-        foreach (string component in objectComponents[itemName]) {
-            var item = Resources.Load(component);
+        foreach (GameObject component in inventory) {
+            Debug.Log(component.name);
+            var item = Resources.Load(component.GetComponent<Item>().itemName);
             Instantiate(item, gameObject.transform.position, Quaternion.identity);
             inventory.Remove(component);
         }
@@ -160,6 +167,8 @@ public class Item : MonoBehaviour
     public void complete()
     {        
         gameObject.tag = "Item";
+        // Increment this objects progression. 
+        // Could write to the program at this point too.
         
         // Bit of a weird temporary fix... Will have to think about this later
         if (isTransitioning)
@@ -169,7 +178,8 @@ public class Item : MonoBehaviour
             // Only singleton items can be stored. Therefore if task is to deliver the item, you
             // must empty it's contents
             case "delivery":
-                if (!isEmpty)
+                Debug.Log(inventory.Count);
+                if (inventory.Count > 0)
                     EmptyContents();
                 break;
 
@@ -189,6 +199,10 @@ public class Item : MonoBehaviour
                 processObject.GetComponent<Store>().Add();
 
                 Destroy(gameObject);
+                break;
+
+            // Change this name! Used with fissle material
+            case "scoop":
                 break;
         }
     }

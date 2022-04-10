@@ -58,6 +58,7 @@ public class SimpleWorker : MonoBehaviour
     public string taskToStart = null;
     public string transitionStore;
     public string transitionDestination;
+    public string objectToContain = null;
 
     /* ------------------------------------ Simulation parameters ----------------------------------- */
     private int stepsBetweenObservations = 5;
@@ -275,9 +276,25 @@ public class SimpleWorker : MonoBehaviour
                     break;
                 }
                 else {
+                    // If we're containing a material, allow it to be instant
+                    /* if (objectToContain != null) {
+                        
+                        GameObject obj = GameObject.Find(objectToContain);
+
+                        nextItem.inventory.Add(obj);
+                        Destroy(obj);
+
+                        nextItem = null;
+
+                        destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
+                        nmAgent.SetDestination(destination);
+
+                        nextAction = "decide";
+                        break;
+
+                    } */
                     if (nextItem.GetRemainingTime() <= 0) {
                         nextItem.complete();
-                        _beliefs.Remove(nextItem.GetName());
 
                         nextItem = null;
 
