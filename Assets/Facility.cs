@@ -5,8 +5,11 @@ using UnityEngine;
 
 public class Facility : MonoBehaviour
 {
-    public List<string> inputItems; 
-    private string targetObject;
+    public string inputItemName; 
+    public string watchedItemName;
+    public GameObject targetObject;
+    public GameObject localMaterialStore;
+    public Facility nextFacility;
 
     public int amountOfComponents;
     public string nextPhase;
@@ -43,30 +46,28 @@ public class Facility : MonoBehaviour
         //Use the OverlapBox to detect if there are any other colliders within this box area.
         //Use the GameObject's centre, half the size (as a radius) and rotation. This creates an invisible box around your GameObject.
         Collider[] hitColliders = Physics.OverlapBox(gameObject.transform.position, transform.localScale / 2, Quaternion.identity, m_LayerMask);
-        int i = 0;
-        foreach (Collider hit in hitColliders) {
-            if (hit.tag == "Item" || hit.tag == "HeldItem" || hit.tag == "ActiveItem") {
-                Item item = hit.gameObject.GetComponent<Item>();
-                if (inputItems.Contains(item.itemName) && !item.isTransitioning)
-                    targetObject = hit.name;
-                    i++;
-            }
-            
+        localFreeAgents = new List<string>();
+        foreach (Collider hit in hitColliders) {            
             // May as well keep track of agents in here too
-            if (hit.tag == "Agent" && hit.GetComponent<SimpleWorker>().GetNextAction() == "decide")
+            if (hit.tag == "Agent") {
+                hit.GetComponent<SimpleWorker>().currentFacility = this;
                 localFreeAgents.Add(hit.name);
+            }
+
+            if (hit.tag == "Item")
+                hit.GetComponent<Item>().storeObject = localMaterialStore;
         }
 
-        if (i > 0) {
+        /* if (i > 0) {
             amountOfTasksInProgress = Convert.ToInt32(Math.Ceiling( (double) i / amountOfComponents));
         }
         else 
             amountOfTasksInProgress = 0;
 
-        Debug.Log($"We have {i} interesting objects, and {amountOfTasksInProgress} tasks going on!");
+        Debug.Log($"We have {i} interesting objects, and {amountOfTasksInProgress} tasks going on!"); */
 
         // Kinda a weird way of organizing it...
-        if (amountOfTasksInProgress < lastAmountOfTasks) {
+        /* if (amountOfTasksInProgress < lastAmountOfTasks) {
             if (localFreeAgents.Count > 0) {
                 Debug.Log($"Ready for {nextPhase}!"); 
                 agent.InformAgents(localFreeAgents, nextPhase, targetObject);
@@ -75,7 +76,7 @@ public class Facility : MonoBehaviour
         }
         else {
             lastAmountOfTasks = amountOfTasksInProgress;
-        }
+        } */
         
     }
 
@@ -87,5 +88,16 @@ public class Facility : MonoBehaviour
         if (m_Started)
             //Draw a cube where the OverlapBox is (positioned where your GameObject is as well as a size)
             Gizmos.DrawWireCube(transform.position, transform.localScale);
+    }
+
+    public void RecordCompletion(Item _item) {
+        if (_item.itemName == watchedItemName && _item.inventory.Count != 0) {
+            Debug.Log($"Nice! Let's tell everyone. There's {localFreeAgents.Count} to pick from");
+            nextFacility.SetupNewTask(localMaterialStore.name);
+        }
+    }
+
+    public void SetupNewTask(string lastMaterialStore) {
+        agent.InformAgents(localFreeAgents, lastMaterialStore, gameObject.name);
     }
 }

@@ -5,21 +5,25 @@ using UnityEngine;
 public class Store : MonoBehaviour
 {
     public string itemStored;
-    public int occupancy;
+    public List<GameObject> inventory = new List<GameObject>();
 
-    public void Add() {
-        Debug.Log($"A delicious {itemStored}!");
-        occupancy++;
+    void Start()
+    {
+        inventory = new List<GameObject>();
     }
 
-    public string Remove() {
-        if (occupancy > 0) {
-            Debug.Log($"Begone, {itemStored}!");
-            occupancy--;
-            return itemStored;
+    public void Add(GameObject _object) {
+        inventory.Add(_object);
+    }
+
+    public GameObject Remove() {
+        if (inventory.Count > 0) {
+            GameObject _object = inventory[0];
+            _object.SetActiveRecursively(true);
+            inventory.RemoveAt(0);
+            return _object;
         }
-        else {
-            return "empty";
-        }
+        else
+            return null;
     }
 }

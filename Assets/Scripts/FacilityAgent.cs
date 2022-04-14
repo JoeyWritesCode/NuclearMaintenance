@@ -13,7 +13,11 @@ public class FacilityAgent : Agent
 {
 
     private List<string> localAgents;
+    private int agentCounter = 0;
     private List<string> transitionActions;
+
+    private string lastMaterialStore;
+    private string nameOfDestination;
 
     private string phase;
 
@@ -33,13 +37,14 @@ public class FacilityAgent : Agent
 
             switch (action)
             {
-                    // reply to begin next phase
+                // reply to begin next phase
                 case "accept":
+                    Debug.Log("Thank you, " + parameters);
                     break;
 
                 case "reject":
-                    localAgents.RemoveAt(0);
-                    Send(localAgents[0], phase);
+                    Debug.Log("No worries, " + parameters);
+                    Send("Agent_" + agentCounter++, $"{lastMaterialStore} {nameOfDestination}");
                     break;
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
@@ -54,11 +59,13 @@ public class FacilityAgent : Agent
         }
     }
 
-    public void InformAgents(List<string> agents, string _phase, string targetItem)
+    public void InformAgents(List<string> agents, string _lastMaterialStore, string _nameOfDestination)
     {
         // Send the transition task to all agents deciding
         localAgents = agents;
-        phase = _phase;
-        Send(localAgents[0], $"{phase} {targetItem}");
+        lastMaterialStore = _lastMaterialStore;
+        nameOfDestination = _nameOfDestination;
+        Debug.Log($"Asking Agent_" + agentCounter);
+        Send("Agent_" + agentCounter++, $"{lastMaterialStore} {nameOfDestination}");
     }
 }

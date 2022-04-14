@@ -34,10 +34,10 @@ public class SimpleAgent : Agent
 
             switch (action)
             {
-                case "Disassembly":
-                    worker.SetDestination(GameObject.Find("StoreWarhead").transform.position);
+                /* case "StoreWarhead":
                     worker.transitionStore = "StoreWarhead";
                     worker.transitionDestination = "Disassembly";
+                    worker.SetDestination(GameObject.Find("StoreWarhead").transform.position);
                     worker.SetNextAction("retrieve");
                     break;
 
@@ -49,10 +49,17 @@ public class SimpleAgent : Agent
                     worker.objectToContain = parameters;
 
                     worker.SetNextAction("retrieve");
-                    break;
+                    break; */
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
-                default:                    
+                default:    
+                    if (worker.GetNextAction() == "decide") {
+                        SetupTransitionTask(GameObject.Find(action), GameObject.Find(parameters)); 
+                        Send(message.Sender, $"accept {name}");
+                    }
+                    else {
+                        Send(message.Sender, $"reject {name}");
+                    }
                     break;
             }
         }
@@ -63,5 +70,13 @@ public class SimpleAgent : Agent
         }
 
         //worker.Act();
+    }
+
+    void SetupTransitionTask(GameObject startingStore, GameObject objectToBringTo)
+    {
+        worker.transitionStore = startingStore;
+        worker.transitionDestination = objectToBringTo;
+        worker.SetDestination(startingStore.transform.position);
+        worker.SetNextAction("retrieve");
     }
 }

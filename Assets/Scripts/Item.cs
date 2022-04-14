@@ -6,6 +6,7 @@ public class Item : MonoBehaviour
 {
     private static Dictionary<string, float> itemMaintences;
     
+    /* ----------------------- Variables detailing how this item is processed ----------------------- */
     public int time_spent_waiting;
     private float total_time = 50.0f;
     private float remaining_time;
@@ -16,41 +17,24 @@ public class Item : MonoBehaviour
 
     private Renderer renderer;
 
-/* ----------- Change all these to public variables. That way they can be incremented ----------- */
+    /* -------------------------- These describe HOW the item is processed -------------------------- */
 
     public Vector3 processPosition;
+
+    public string storeObjectName;
+    public GameObject storeObject;
+    public string processObjectName;
     private GameObject processObject;
-    public List<string> processInformation;
+    public string typeOfProcess;
+
+    private bool needsMaintenance;
+    private Facility nextFacility;
+    /* public Dictionary<string, List<string>> processInformation; */
 
     public bool isEmpty = false;
     public bool isTransitioning = false;
     public string itemName;
 
-    private string typeOfProcess;
-
-    private Dictionary<string, List<string>> objectsBelongWith = new Dictionary<string, List<string>> {
-        {"WarheadTransitContainer", new List<string>{"GoodsInOut", "delivery"}},
-        {"EmptyWarheadTransitContainer", new List<string>{"StoreContainersWarheadTransit", "store"}},
-        {"WarheadContainer", new List<string>{"StoreWarhead", "store"}},
-        {"EmptyWarheadContainer", new List<string>{"StoreContainersWarhead", "store"}},
-        {"Warhead", new List<string>{"Disassembly", "delivery"}},
-        {"MaterialA", new List<string>{"StoreContainersMaterialA", "merge"}},
-        {"MaterialAContainer", new List<string>{"StoreMaterialA", "store"}},
-        {"EmptyMaterialAContainer", new List<string>{"MaterialA", "scoop"}},
-        {"MaterialB", new List<string>{"StoreContainersMaterialB", "merge"}},
-        {"MaterialBContainer", new List<string>{"StoreMaterialB", "store"}},
-        {"NonFissle", new List<string>{"StoreContainersNonFissle", "merge"}},
-        {"NonFissleContainer", new List<string>{"StoreNonFissle", "store"}},
-        {"EmptyWarhead", new List<string>{"StoreNonFissle", "store"}},
-        {"CompletedWarhead", new List<string>{"StoreContainersWarheadTransit", "merge"}},
-        };
-
-    private Dictionary<string, List<string>> objectComponents = new Dictionary<string, List<string>> {
-        {"WarheadTransitContainer", new List<string>{"WarheadContainer"}},
-        {"WarheadContainer", new List<string>{"Warhead"}},
-        {"Warhead", new List<string>{"MaterialA", "MaterialB", "NonFissle"}},
-        {"MaterialAContainer", new List<string>{"MaterialA"}}
-        };
 
     public List<GameObject> inventory;
 
@@ -58,13 +42,13 @@ public class Item : MonoBehaviour
     void Start()
     {
         renderer = gameObject.GetComponent<Renderer>();
-        processInformation = objectsBelongWith[itemName];
+        /* processInformation = objectsBelongWith[itemName];
         if (inventory.Count == 0)
-            processObject = 
+            processObject = itemStore;
         else
             processObject = GameObject.Find(processInformation[0]);
 
-        typeOfProcess = processInformation[1];
+        typeOfProcess = processInformation[1]; */
         switch (typeOfProcess) {
             case "delivery":
                 total_time = float.MinValue;
@@ -77,17 +61,27 @@ public class Item : MonoBehaviour
                 break;
         }
 
+        processObject = GameObject.Find(processObjectName);
+
         processPosition = processObject.transform.position;
         remaining_time = total_time;
 
-        if (itemName.StartsWith("Empty"))
-            isEmpty = true;
+        // No longer using colliders, so this is a little redundant. 
+        Debug.Log($"{gameObject.name} will be aware of the floor goddamit!");
+        Physics.IgnoreCollision(this.GetComponent<Collider>(), GameObject.Find("Floor").GetComponent<Collider>(), false);   
     }
 
     void Update()
     {
         time_spent_waiting++;
     }
+
+    /* ----------------------- This is to track which facility the item is in ----------------------- */
+    /* private void OnTriggerEnter(Collider other) {
+        if (other.tag == "Facility") {
+            storeObject = other.GetComponent<Facility>().localMaterialStore;
+        }
+    } */
 
     public void decrementProcessTime()
     {
@@ -146,23 +140,6 @@ public class Item : MonoBehaviour
         return gameObject.name;
     }
 
-    void EmptyContents()
-    {
-        foreach (GameObject component in inventory) {
-            Debug.Log(component.name);
-            var item = Resources.Load(component.GetComponent<Item>().itemName);
-            Instantiate(item, gameObject.transform.position, Quaternion.identity);
-            inventory.Remove(component);
-        }
-
-        // For now, destroy Warheads after disassembling them.
-        // We're going to need to announce this later - and potentially pass it to maintenance
-        if (itemName != "Warhead") {
-            var emptyItem = Resources.Load("Empty" + itemName);
-            Instantiate(emptyItem, gameObject.transform.position, Quaternion.identity);
-        }
-        Destroy(gameObject);
-    }
 
     public void complete()
     {        
@@ -171,40 +148,78 @@ public class Item : MonoBehaviour
         // Could write to the program at this point too.
         
         // Bit of a weird temporary fix... Will have to think about this later
-        if (isTransitioning)
-            typeOfProcess = "delivery";
+        /* if (isTransitioning)
+            typeOfProcess = "delivery"; */
 
         switch (typeOfProcess) {
             // Only singleton items can be stored. Therefore if task is to deliver the item, you
             // must empty it's contents
             case "delivery":
-                Debug.Log(inventory.Count);
                 if (inventory.Count > 0)
                     EmptyContents();
                 break;
 
             // Spawn a new container from this store, and add the current item to it's inventory
-            case "merge":
+            /* case "merge":
                 var container = Resources.Load(itemName + "Container");
                 Instantiate(container, gameObject.transform.position, Quaternion.identity);
-                /* Debug.Log(containerName);
+                Debug.Log(containerName);
                 var container = Resources.Load(containerName);
                 GameObject containerItem = (GameObject) Instantiate(container, gameObject.transform.position, Quaternion.identity);
-                containerItem.GetComponent<Item>().inventory.Add(itemName); */
+                containerItem.GetComponent<Item>().inventory.Add(itemName);
                 Destroy(gameObject);
-                break;
+                break; */
 
             // Increment the store's occupancy
             case "store":
-                processObject.GetComponent<Store>().Add();
-
-                Destroy(gameObject);
+                processObject.GetComponent<Store>().Add(gameObject);
+                //nextFacility.targetObject = gameObject;
+                gameObject.SetActiveRecursively(false);
                 break;
 
             // Change this name! Used with fissle material
             case "scoop":
+                inventory.Add(processObject);
+                processObject.SetActiveRecursively(false);
+                break;
+
+            case "maintenance":
+                needsMaintenance = false;
                 break;
         }
+    }
+
+    void EmptyContents()
+    {
+
+        float spawnRadius = 1.0f;
+        foreach (GameObject component in inventory) {
+            Debug.Log(component.name);
+            var item = Resources.Load(component.GetComponent<Item>().itemName);
+
+            Vector3 spawnPoint = gameObject.transform.position + Random.insideUnitSphere * spawnRadius;
+            Instantiate(item, spawnPoint, Quaternion.identity);
+        }
+        inventory = new List<GameObject>();
+
+        // Bring this to where the empty one's go!
+        SetEmptyDestinations();
+
+        // For now, destroy Warheads after disassembling them.
+        // We're going to need to announce this later - and potentially pass it to maintenance
+        /* if (itemName != "Warhead") {
+            var emptyItem = Resources.Load("Empty" + itemName);
+            Instantiate(emptyItem, gameObject.transform.position, Quaternion.identity);
+        }
+        Destroy(gameObject); */
+    }
+
+    void SetEmptyDestinations()
+    {
+        processObjectName = storeObjectName;
+        processObject = GameObject.Find(processObjectName);
+        processPosition = processObject.transform.position;
+        typeOfProcess = "store";
     }
 
     public bool isUnavailable()

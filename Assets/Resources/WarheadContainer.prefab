@@ -111,7 +111,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
   processPosition: {x: 0, y: 0, z: 0}
-  processInformation: []
+  storeObjectName: StoreContainersWarhead
+  storeObject: {fileID: 0}
+  processObjectName: StoreWarhead
+  typeOfProcess: store
   isEmpty: 0
   isTransitioning: 0
   itemName: WarheadContainer
@@ -132,4 +135,4 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1

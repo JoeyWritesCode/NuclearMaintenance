@@ -29,7 +29,7 @@ public class SimpleWorker : MonoBehaviour
     private NavMeshAgent nmAgent;
     private Vector3 destination;
     private Vector3 processPosition;
-    private float wanderDistance = 7.5f;
+    private float wanderDistance = 30.0f;
     private Vector3 infinity = new Vector3(Single.PositiveInfinity, Single.PositiveInfinity, Single.PositiveInfinity);
 
     /* --------------------- Associated agent within the ActressMas environment --------------------- */
@@ -56,9 +56,12 @@ public class SimpleWorker : MonoBehaviour
     private bool delivered;
     private string nextAction = "decide";
     public string taskToStart = null;
-    public string transitionStore;
-    public string transitionDestination;
+    public GameObject transitionStore;
+    public GameObject transitionDestination;
     public string objectToContain = null;
+
+    /* ----------------------------- Facility parameters for global flow ---------------------------- */
+    public Facility currentFacility;
 
     /* ------------------------------------ Simulation parameters ----------------------------------- */
     private int stepsBetweenObservations = 5;
@@ -95,6 +98,13 @@ public class SimpleWorker : MonoBehaviour
             steps = 0;
         }
         Act();
+    }
+
+    private void OnTriggerEnter(Collider other) {
+        if (other.tag == "Facility") {
+            currentFacility = other.GetComponent<Facility>();
+            Debug.Log($"I'm in {currentFacility.GetName()}");
+        }
     }
 
     void UpdateTextBox(string _textPrompt) {
@@ -163,7 +173,7 @@ public class SimpleWorker : MonoBehaviour
             nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
         }
         else {
-            nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
+            //nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
             nextItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 1);
             nextItem.gameObject.transform.parent = gameObject.transform;
             isCarrying = true;
@@ -195,7 +205,7 @@ public class SimpleWorker : MonoBehaviour
                         break;
                     }
                     else {
-                        if (nextItem.itemName.StartsWith("Material")) {
+                        /* if (nextItem.itemName.StartsWith("Material")) {
                             // Retrieve the relevant container from the store
                             // Bring it here and merge the two
                             transitionStore = "StoreContainersMaterial" + nextItem.itemName[8];
@@ -208,14 +218,14 @@ public class SimpleWorker : MonoBehaviour
                             nextAction = "retrieve";
                             break;
                         }
-                        else {
-                            destination = nextItem.GetPosition();
-                            processPosition = nextItem.GetProcessPosition();
-                            nmAgent.SetDestination(destination);
+                        else { */
+                        destination = nextItem.GetPosition();
+                        processPosition = nextItem.GetProcessPosition();
+                        nmAgent.SetDestination(destination);
 
-                            nextAction = "collect"; 
-                            break;
-                        }
+                        nextAction = "collect"; 
+                        break;
+                        
                     }
                 }
                 else {
@@ -241,8 +251,8 @@ public class SimpleWorker : MonoBehaviour
                 }
                 else {
                     if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= grabDistance) {
-                        CollectItem();
-                        nextItem.gameObject.tag = "HeldItem";
+                        CollectItem(nextItem);
+                        //nextItem.gameObject.tag = "HeldItem";
 
                         //destination = nextItem.GetProcessPosition();
                         nmAgent.SetDestination(processPosition);
@@ -293,8 +303,37 @@ public class SimpleWorker : MonoBehaviour
                         break;
 
                     } */
+                    if (nextItem.typeOfProcess == "scoop-up") {
+                        // Get this item's container
+                        // Bring it here
+                        // Add em together
+                        nextItem.gameObject.tag = "ActiveItem";
+                        transitionStore = nextItem.storeObject;
+                        SetDestination(transitionStore.transform.position);
+                        while ((destination - gameObject.transform.position).magnitude > grabDistance) {
+                            Debug.Log($"Don't worry {nextItem.GetName()}! I'll get you your {nextItem.storeObjectName}");
+                        }
+                        GameObject containerObject = transitionStore.GetComponent<Store>().Remove();
+                        Item containerItem = containerObject.GetComponent<Item>();
+                        CollectItem(containerItem);
+                        SetDestination(nextItem.GetPosition());
+                        while ((destination - gameObject.transform.position).magnitude > grabDistance) {
+                            Debug.Log($"On my way back!");
+                        }
+                        // Finally!
+                        containerItem.inventory.Add(nextItem.gameObject);
+                        nextItem.gameObject.SetActiveRecursively(false);
+
+                        nextAction = "decide";
+                        break;
+                    }
+
                     if (nextItem.GetRemainingTime() <= 0) {
                         nextItem.complete();
+                        Debug.Log($"{nextItem.itemName} has been completed - let's tell {currentFacility.GetName()}");
+
+                        // Inform the facility of this item's completion
+                        currentFacility.RecordCompletion(nextItem);
 
                         nextItem = null;
 
@@ -313,15 +352,11 @@ public class SimpleWorker : MonoBehaviour
 
             case "retrieve":
                 if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
-                    Debug.Log($"Finally! Phew! Let's empty this {transitionStore}");
-                    string itemName = GameObject.Find(transitionStore).GetComponent<Store>().Remove();
-                    if (itemName != "empty") {
-                        GameObject item = (GameObject) Instantiate(Resources.Load(itemName), gameObject.transform.position, Quaternion.identity);
-
-                        nextItem = item.GetComponent<Item>();
-                        nextItem.isTransitioning = true;
-                        Debug.Log($"I will now go to {transitionDestination}!");
-                        processPosition = GameObject.Find(transitionDestination).transform.position;
+                    GameObject itemObject = transitionStore.GetComponent<Store>().Remove();
+                    if (itemObject != null) {
+                        nextItem = itemObject.GetComponent<Item>();
+                        //nextItem.isTransitioning = true;
+                        processPosition = transitionDestination.transform.position;
                         nextItem.SetProcessType("delivery");
                     }
                     nextAction = "collect";
@@ -355,23 +390,45 @@ public class SimpleWorker : MonoBehaviour
         }
     }
 
-    void CollectItem()
+    void ProcessItem()
+    {
+        switch (nextItem.typeOfProcess) {
+            case "merge": // the item requires a container to be drawn for it
+                break;
+            case "maintenance": // the item needs to undergo the maintenance process
+                break;
+            case "store": // the item needs to be placed inside it's store
+                break;
+            case "empty": // the item's inventory needs to populate the world
+                break;
+            default: // this variable has not been assigned a valid value
+                throw new ArgumentException("Process type is not recognised :", nextItem.typeOfProcess);
+        }
+    }
+
+    void CollectItem(Item _nextItem)
     {
         // check if distance to item is less than distance threshold
-            Debug.Log($"Let's pick up this {nextItem.GetName()}");
-            nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
-            nextItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 1);
-            nextItem.gameObject.transform.parent = gameObject.transform;
+            Debug.Log($"Let's pick up this {_nextItem.GetName()}");
 
-            nextItem.setBeingCarried(true);
-            nextItem.gameObject.tag = "HeldItem";
+            // Don't know why this isn't working...
+            /* nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
+            nextItem.gameObject.transform.position = transform.Find("Hands").transform.position;
+            nextItem.gameObject.transform.parent = gameObject.transform; */
+            _nextItem.gameObject.SetActiveRecursively(false);
+
+            _nextItem.setBeingCarried(true);
+            _nextItem.gameObject.tag = "HeldItem";
     }
 
     void DeliverItem()
     {
         Debug.Log($"Let's drop this {nextItem.GetName()}");
-        nextItem.gameObject.transform.parent = null;
-        nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
+        /* nextItem.gameObject.transform.parent = null;
+        nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true; */
+
+        nextItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 0);
+        nextItem.gameObject.SetActiveRecursively(true);
 
         nextItem.setBeingCarried(false);
         nextItem.gameObject.tag = "Item";
