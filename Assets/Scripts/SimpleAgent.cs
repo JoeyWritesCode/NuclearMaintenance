@@ -20,7 +20,7 @@ public class SimpleAgent : Agent
 
     public override void Setup()
     {
-        Debug.Log($"Starting {name}");
+        Send("program", $"Starting {name}");
     }
  
     // This is only used for when receiving messages from the agent's BDI model. 
@@ -69,7 +69,12 @@ public class SimpleAgent : Agent
             //Console.WriteLine(ex.ToString()); // for debugging
         }
 
-        //worker.Act();
+        worker.Act();
+    }
+
+    public override void ActDefault()
+    {
+        worker.Act();
     }
 
     void SetupTransitionTask(GameObject startingStore, GameObject objectToBringTo)

@@ -16,6 +16,7 @@
 using ActressMas;
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
@@ -65,6 +66,31 @@ public class Percept
     }
 }
 
+public class SimulationAgent : Agent
+{
+    private List<string> events = new List<string>();
+
+    public override void Act(Message message)
+    {
+        try
+        {
+            Console.WriteLine($"\t{message.Format()}");
+            message.Parse(out string eventForLog, out List<string> details);
+            events.Add($"{eventForLog} {String.Join((string) " - ", details)}");
+            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    public List<string> GetEvents()
+    {
+        return events;
+    }
+}
+
 
 public class Program : MonoBehaviour
 {
@@ -73,10 +99,17 @@ public class Program : MonoBehaviour
 
     public int step;
 
-    private EnvironmentMas env;
+    EnvironmentMas env;
+    public int amountOfDays;
+    private int steps_per_day = 20;
+
+    SimulationAgent programAgent;
 
     async void Start() {
         env = new EnvironmentMas(noTurns: 0, delayAfterTurn: 5, randomOrder: false, parallel: false);
+
+        programAgent = new SimulationAgent();
+        env.Add(programAgent, "program");
 
         for (int i = 0; i < numberOfAgents; i++) {
             
@@ -128,8 +161,13 @@ public class Program : MonoBehaviour
 
     async void Update()
     {
-        // Update every 
-        env.RunTurn(step++);
+        if (step == amountOfDays * steps_per_day) {
+            File.WriteAllLines("output.txt", programAgent.GetEvents().ToArray());
+            Time.timeScale = 0;
+            Application.Quit();
+        }
+        else 
+            env.RunTurn(step++);
     }
 
     public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {

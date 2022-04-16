@@ -92,12 +92,12 @@ public class SimpleWorker : MonoBehaviour
         else {
             UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
         }
-        steps++;
+        /* steps++;
         if (steps == stepsBetweenObservations) {
             _beliefs = GetObjectsInRange(gameObject.transform.position, "Item");
             steps = 0;
         }
-        Act();
+        Act(); */
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -390,7 +390,7 @@ public class SimpleWorker : MonoBehaviour
         }
     }
 
-    void ProcessItem()
+    /* void ProcessItem()
     {
         switch (nextItem.typeOfProcess) {
             case "merge": // the item requires a container to be drawn for it
@@ -404,7 +404,7 @@ public class SimpleWorker : MonoBehaviour
             default: // this variable has not been assigned a valid value
                 throw new ArgumentException("Process type is not recognised :", nextItem.typeOfProcess);
         }
-    }
+    } */
 
     void CollectItem(Item _nextItem)
     {
