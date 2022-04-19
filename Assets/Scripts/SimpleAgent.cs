@@ -24,15 +24,15 @@ public class SimpleAgent : Agent
     }
  
     // This is only used for when receiving messages from the agent's BDI model. 
-    // Could be target percept requests, or a new action to add to the actionList
+    // Could be target percept requests, or a new facilityItem to add to the actionList
     public override void Act(Message message)
     {
         try
         {
             Console.WriteLine($"\t{message.Format()}");
-            message.Parse(out string action, out string parameters);
+            message.Parse(out string facilityItem, out string parameters);
 
-            switch (action)
+            switch (facilityItem)
             {
                 /* case "StoreWarhead":
                     worker.transitionStore = "StoreWarhead";
@@ -53,8 +53,8 @@ public class SimpleAgent : Agent
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
                 default:    
-                    if (worker.GetNextAction() == "decide") {
-                        SetupTransitionTask(GameObject.Find(action), GameObject.Find(parameters)); 
+                    if (!worker.isBusy()) {
+                        worker.assignItem(facilityItem);
                         Send(message.Sender, $"accept {name}");
                     }
                     else {

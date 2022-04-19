@@ -200,7 +200,7 @@ public class Worker : MonoBehaviour
 
 
             case "collect":
-                if (nextItem.isUnavailable()) {
+                if (!nextItem.isAvailable()) {
                     Debug.Log("Someone picked that up!");
                     nextItem = null;
 

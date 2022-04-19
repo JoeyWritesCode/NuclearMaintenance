@@ -16,88 +16,43 @@ using ActressMas;
 public class SimpleWorker : MonoBehaviour
 {
 
-    /* ----------------------------- The GameObject used for picking up ----------------------------- */
-    // - Could we just use the Worker as the parent object, with a small offset?
-    public GameObject Hands;
-
     /* ------------------------------------ The heads up display ------------------------------------ */
-    public TMP_Text TextBox;
-    private string textPrompt;
-    private string lastPrompt;
+    private TMP_Text TextBox;
 
     /* -------------------------------------- NavMesh variables ------------------------------------- */
     private NavMeshAgent nmAgent;
     private Vector3 destination;
-    private Vector3 processPosition;
+    private Vector3 position;
     private float wanderDistance = 30.0f;
-    private Vector3 infinity = new Vector3(Single.PositiveInfinity, Single.PositiveInfinity, Single.PositiveInfinity);
-
-    /* --------------------- Associated agent within the ActressMas environment --------------------- */
-    public UnityAgent agent;
-
-    /* ------------------------------------- The BDI structures ------------------------------------- */
-    // - Right now, not used
-    private Dictionary<string, Vector3> _beliefs;
-    private HashSet<string> _desires;
-    private string _intention; // only 1 intention active in this model
-    private string newIntention;
-    private List<string> _plan;
-    private bool _needToReplan;
+    Vector3 infinity = new Vector3(Single.PositiveInfinity, Single.PositiveInfinity, Single.PositiveInfinity);
 
     /* ------------------------------------ The Worker parameters ----------------------------------- */
-    private float visionDistance = 10.0f;
     private float grabDistance = 2.0f;
-    private float travelSpeed = 5.0f;
-    private float processSpeed = 1.0f;
 
     /* ---------------------------------- Task management variables --------------------------------- */
     private Item nextItem;
-    private bool isCarrying;
-    private bool delivered;
+    private Item heldItem;
     private string nextAction = "decide";
-    public string taskToStart = null;
-    public GameObject transitionStore;
-    public GameObject transitionDestination;
-    public string objectToContain = null;
+    private string currentTask;
 
     /* ----------------------------- Facility parameters for global flow ---------------------------- */
     public Facility currentFacility;
 
-    /* ------------------------------------ Simulation parameters ----------------------------------- */
-    private int stepsBetweenObservations = 5;
-    private int steps = 0;
 
     void Start()
     {
     /* --------------------------------- Set up internal structures --------------------------------- */
-        _beliefs = new Dictionary<string, Vector3>();
-
-        isCarrying = false;
-        delivered = false;
-
         nmAgent = gameObject.GetComponent<NavMeshAgent>();
         
         nextItem = null;
+        heldItem = null;
         destination = gameObject.transform.position;
-
-        textPrompt = "decide";
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (nextItem == null) {
-            UpdateTextBox("deciding");
-        }
-        else {
-            UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
-        }
-        /* steps++;
-        if (steps == stepsBetweenObservations) {
-            _beliefs = GetObjectsInRange(gameObject.transform.position, "Item");
-            steps = 0;
-        }
-        Act(); */
+        UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -114,28 +69,20 @@ public class SimpleWorker : MonoBehaviour
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
     /*                                       Auxiliary functions                                      */
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-    private Dictionary<string, Vector3> GetObjectsInRange(Vector3 position, string tag)
+    private List<GameObject> GetObjectsInRange(Vector3 position, string tag)
     {
-        Dictionary<string, Vector3> seenObjects = new Dictionary<string, Vector3>();
+        List<GameObject> seenObjects = new List<GameObject>();
+        float visionDistance = (gameObject.GetComponent<Renderer>().bounds.size).magnitude;
 
         Collider[] hitColliders = Physics.OverlapSphere(position, visionDistance);
         foreach (var hitCollider in hitColliders)
         {
             if (hitCollider.gameObject.tag == tag) {
-                seenObjects[hitCollider.gameObject.name] = hitCollider.gameObject.transform.position;
+                seenObjects.Add(hitCollider.gameObject);
             }
-        }
+        }        
+        seenObjects.OrderBy(obj => (obj.transform.position - position).magnitude);
         return seenObjects;
-    }
-
-    float TravelEffort(string key) {
-        Item item = GameObject.Find(key).GetComponent<Item>();
-        float time_to_item = (item.GetPosition() - gameObject.transform.position).magnitude / travelSpeed;
-        float time_to_carry = (item.GetProcessPosition() - item.GetPosition()).magnitude / travelSpeed;
-        float time_to_process = item.GetRemainingTime() / processSpeed;
-        float score = time_to_item + time_to_carry + time_to_process - item.GetTimeSpentWaiting();
-        Debug.Log($"{key} has a score of {score}");
-        return score;
     }
 
     public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {
@@ -156,28 +103,12 @@ public class SimpleWorker : MonoBehaviour
         return (locationTwo - locationOne).magnitude <= minimumDistance;
     }
 
-    public string GetNextAction() {
-        return nextAction;
+    public bool isBusy() {
+        return nextAction != "decide";
     }
 
-    public void SetNextAction(string _nextAction) {
-        nextAction = _nextAction;
-    }
-
-    /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-    /*                                GameObject interaction functions                                */
-    /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-    private void toggleCarry() {
-        if (isCarrying) {
-            nextItem.gameObject.transform.parent = null;
-            nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true;
-        }
-        else {
-            //nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
-            nextItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 1);
-            nextItem.gameObject.transform.parent = gameObject.transform;
-            isCarrying = true;
-        }
+    public void assignItem(Item _item) {
+        nextItem = _item;
     }
 
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -185,226 +116,137 @@ public class SimpleWorker : MonoBehaviour
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
     public void Act()
     {
-        UpdateTextBox(nextAction);
+        position = gameObject.transform.position;
         switch (nextAction) 
         {
-            // Let's step this out for now...
             case "decide":
                 DecideOnTask();
                 if (nextItem != null) {
-                    if ((nextItem.transform.position - gameObject.transform.position).magnitude > wanderDistance * 5) {
-                        nextItem = null;
-                        break;
-                    }
+                    nextItem.selectForTask();
 
-                    if (nextItem.inProcessPosition()) {
-                        destination = nextItem.GetProcessPosition();
-                        nmAgent.SetDestination(destination);
-
-                        nextAction = "process";
-                        break;
-                    }
-                    else {
-                        /* if (nextItem.itemName.StartsWith("Material")) {
-                            // Retrieve the relevant container from the store
-                            // Bring it here and merge the two
-                            transitionStore = "StoreContainersMaterial" + nextItem.itemName[8];
-                            destination = GameObject.Find(transitionStore).transform.position;
-                            transitionDestination = nextItem.name;
-                            nmAgent.SetDestination(destination);
-
-                            // Just to make sure no one else scoops it up
-                            nextItem.gameObject.tag = "ActiveItem";
-                            nextAction = "retrieve";
+                    // Set the relevant destination to begin this process
+                    switch (nextItem.typeOfProcess) {
+                        case "retrieve container":
+                            // make a plan
+                            GoToObject(nextItem.storeObject);
                             break;
-                        }
-                        else { */
-                        destination = nextItem.GetPosition();
-                        processPosition = nextItem.GetProcessPosition();
-                        nmAgent.SetDestination(destination);
-
-                        nextAction = "collect"; 
-                        break;
-                        
+                        case "collect":
+                            GoToObject(nextItem.gameObject);
+                            break;
+                        default:
+                            throw new InvalidOperationException("Tasks can either begin with retrival or collection");
                     }
+                    nextAction = nextItem.typeOfProcess;
                 }
                 else {
-                    if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
-                        destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
+                    if ((destination - position).magnitude <= grabDistance) {
+                        // get random point in random facility?
+                        destination = GetRandomPoint(position, wanderDistance);
                         Debug.Log($"New location is {destination}");
                         nmAgent.SetDestination(destination);
                     }
-                    break;
                 }
+                break;
 
+            case "retrieve container":
+                if ((destination - position).magnitude <= grabDistance) {
+                    Item containerItem = nextItem.storeObject.GetComponent<Store>().Remove();
+                    CollectItem(containerItem);
+                    GoToObject(nextItem.gameObject);
+                    nextAction = "contain";
+                }
+                break;
 
-            case "collect":
-                if (nextItem.isUnavailable()) {
-                    Debug.Log("Someone picked that up!");
+            case "contain":
+                if ((destination - position).magnitude <= grabDistance) {
+                    heldItem.AddToInventory(nextItem);
+                    nextItem.complete();
                     nextItem = null;
 
-                    destination = gameObject.transform.position;
-                    nmAgent.SetDestination(destination);
+                    DeliverItem(heldItem);
+                    heldItem.complete();
 
                     nextAction = "decide";
-                    break;
-                }
-                else {
-                    if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= grabDistance) {
-                        CollectItem(nextItem);
-                        //nextItem.gameObject.tag = "HeldItem";
-
-                        //destination = nextItem.GetProcessPosition();
-                        nmAgent.SetDestination(processPosition);
-
-                        nextAction = "deliver";
-                        break;
-                    }
-                    else {
-                        Debug.Log($"We're on our way to {destination} to collect {nextItem.GetName()}");
-                        break;
-                    }
-                }
-
-            case "deliver":
-                Debug.Log($"We're on our way to {processPosition} to deliver {nextItem.GetName()}");
-                //Debug.Log((processPosition - gameObject.transform.position).magnitude);
-
-                if (Math.Abs(processPosition.x - gameObject.transform.position.x) <= grabDistance && Math.Abs(processPosition.z - gameObject.transform.position.z) <= grabDistance) {
-                    DeliverItem();
-                    
-                    nmAgent.SetDestination(gameObject.transform.position);
-                    
-                    nextItem.gameObject.tag = "ActiveItem";
-                    nextAction = "process";
                 }
                 break;
 
-            case "process":
-                if (nextItem == null) {
-                    nextAction = "decide";
-                    break;
-                }
-                else {
-                    // If we're containing a material, allow it to be instant
-                    /* if (objectToContain != null) {
-                        
-                        GameObject obj = GameObject.Find(objectToContain);
-
-                        nextItem.inventory.Add(obj);
-                        Destroy(obj);
-
-                        nextItem = null;
-
-                        destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
-                        nmAgent.SetDestination(destination);
-
-                        nextAction = "decide";
-                        break;
-
-                    } */
-                    if (nextItem.typeOfProcess == "scoop-up") {
-                        // Get this item's container
-                        // Bring it here
-                        // Add em together
-                        nextItem.gameObject.tag = "ActiveItem";
-                        transitionStore = nextItem.storeObject;
-                        SetDestination(transitionStore.transform.position);
-                        while ((destination - gameObject.transform.position).magnitude > grabDistance) {
-                            Debug.Log($"Don't worry {nextItem.GetName()}! I'll get you your {nextItem.storeObjectName}");
-                        }
-                        GameObject containerObject = transitionStore.GetComponent<Store>().Remove();
-                        Item containerItem = containerObject.GetComponent<Item>();
-                        CollectItem(containerItem);
-                        SetDestination(nextItem.GetPosition());
-                        while ((destination - gameObject.transform.position).magnitude > grabDistance) {
-                            Debug.Log($"On my way back!");
-                        }
-                        // Finally!
-                        containerItem.inventory.Add(nextItem.gameObject);
-                        nextItem.gameObject.SetActiveRecursively(false);
-
-                        nextAction = "decide";
-                        break;
-                    }
-
-                    if (nextItem.GetRemainingTime() <= 0) {
-                        nextItem.complete();
-                        Debug.Log($"{nextItem.itemName} has been completed - let's tell {currentFacility.GetName()}");
-
-                        // Inform the facility of this item's completion
-                        currentFacility.RecordCompletion(nextItem);
-
-                        nextItem = null;
-
-                        destination = GetRandomPoint(gameObject.transform.position, wanderDistance);
-                        nmAgent.SetDestination(destination);
-
-                        nextAction = "decide";
-                        break;
+            case "collect":
+                if ((destination - position).magnitude <= grabDistance) {
+                    // Maintenance and disassembly tasks are item dependent
+                    // therefore they interupt the plan tree, but maintain the task
+                    if (nextItem.requiresProcessing()) {
+                        GoToObject(gameObject);
+                        nextAction = "perform action";
                     }
                     else {
-                        Debug.Log($"Remaining time: {nextItem.GetRemainingTime()}");
-                        nextItem.decrementProcessTime();
-                        break;
+                        CollectItem(nextItem);
+                        nextItem.complete();
+
+                        // Set the task to complete this process
+                        switch (nextItem.typeOfProcess) {
+                            case "deliver":
+                                GoToObject(nextItem.processObject);
+                                break;
+                            case "store":
+                                GoToObject(nextItem.storeObject);
+                                break;
+                            default:    
+                                throw new InvalidOperationException("Collected items can either be delivered or stored");
+                        }
+                        currentTask = nextItem.typeOfProcess;
+                        nextAction = "finish task";
                     }
                 }
+                break;
 
-            case "retrieve":
-                if ((destination - gameObject.transform.position).magnitude <= grabDistance) {
-                    GameObject itemObject = transitionStore.GetComponent<Store>().Remove();
-                    if (itemObject != null) {
-                        nextItem = itemObject.GetComponent<Item>();
-                        //nextItem.isTransitioning = true;
-                        processPosition = transitionDestination.transform.position;
-                        nextItem.SetProcessType("delivery");
+            // Finish the task
+            case "finish task":
+                if ((destination - position).magnitude <= grabDistance) {
+                    switch (currentTask) {
+                        case "deliver":
+                            DeliverItem(nextItem);
+                            nextItem.complete();
+                            nextItem = null;
+                            break;
+                        case "store":
+                            StoreItem();
+                            nextItem.complete();
+                            nextItem = null;
+                            break;
                     }
+                }
+                if (nextItem == null) {
+                    currentTask = null;
+                    nextAction = "decide";
+                }
+                break;
+
+            case "perform action":
+                if (nextItem.requiresProcessing()) {
+                    nextItem.PerformOneStepOfProcess();
+                }
+                else {
                     nextAction = "collect";
                 }
-                break;
 
             default:
                 break;
         }
     }
 
+
     void DecideOnTask()
     {
-        // List<string> availableTasks = new List<string>(_beliefs.Keys);
-        List<string> availableTasks = new List<string>(GetObjectsInRange(gameObject.transform.position, "Item").Keys);
-        availableTasks.OrderBy(name => TravelEffort(name));
-
-        // We may get to the point where there are no more beliefs held.
-        foreach (string item in availableTasks) {
-            nextItem = GameObject.Find(item).GetComponent<Item>();
-        
-            // This is a temporary fix (ish) for when objects fall through the floor. As long as we try to make sure 
-            // not to do that.
-            if ((nextItem.GetPosition() - gameObject.transform.position).magnitude <= 5 * wanderDistance && !nextItem.isUnavailable()) {
+        // Final null check in case a facility has interjected with a transition task
+        foreach (GameObject itemObject in GetObjectsInRange(gameObject.transform.position, "Item")) {
+            Item potentialNextItem = itemObject.GetComponent<Item>();
+            if (potentialNextItem.isAvailable()) {
                 Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
+                nextItem = potentialNextItem;
                 break;
-            }
-            else {
-                nextItem = null;
             }
         }
     }
-
-    /* void ProcessItem()
-    {
-        switch (nextItem.typeOfProcess) {
-            case "merge": // the item requires a container to be drawn for it
-                break;
-            case "maintenance": // the item needs to undergo the maintenance process
-                break;
-            case "store": // the item needs to be placed inside it's store
-                break;
-            case "empty": // the item's inventory needs to populate the world
-                break;
-            default: // this variable has not been assigned a valid value
-                throw new ArgumentException("Process type is not recognised :", nextItem.typeOfProcess);
-        }
-    } */
 
     void CollectItem(Item _nextItem)
     {
@@ -418,42 +260,45 @@ public class SimpleWorker : MonoBehaviour
             _nextItem.gameObject.SetActiveRecursively(false);
 
             _nextItem.setBeingCarried(true);
+            heldItem = _nextItem;
             _nextItem.gameObject.tag = "HeldItem";
     }
 
-    void DeliverItem()
+    void DeliverItem(Item _item)
     {
-        Debug.Log($"Let's drop this {nextItem.GetName()}");
-        /* nextItem.gameObject.transform.parent = null;
-        nextItem.gameObject.GetComponent<Rigidbody>().useGravity = true; */
+        _item.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 0);
+        _item.gameObject.SetActiveRecursively(true);
 
-        nextItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 0);
-        nextItem.gameObject.SetActiveRecursively(true);
-
-        nextItem.setBeingCarried(false);
-        nextItem.gameObject.tag = "Item";
+        _item.setBeingCarried(false);
+        heldItem = null;
+        _item.gameObject.tag = "Item";
     }
 
-    void ProcessItem()
+    void Process()
     {
-        nextItem.decrementProcessTime();
-        if (nextItem.isProcessed()) {
-            nextItem.complete();
-            _beliefs.Remove(nextItem.GetName());
-            nextItem = null;
-            destination = Vector3.zero;
-        }
+        nextItem.PerformProcess();
+    }
+
+    void StoreItem()
+    {
+        Store store = nextItem.storeObject.GetComponent<Store>();
+        store.Add(nextItem);
     }
 
 
-    public List<string> FindNearestAgents() {
-        List<string> agents = new List<string>(GetObjectsInRange(gameObject.transform.position, "Agent").Keys);
-        agents.Remove(gameObject.name);
-        return agents;
+    public List<GameObject> FindNearestWorkers() {
+        List<GameObject> workers = GetObjectsInRange(position, "Agent");
+        workers.Remove(gameObject);
+        return workers;
     }
 
     public void SetDestination(Vector3 _destination) {
         destination = _destination;
         nmAgent.SetDestination(_destination);
+    }
+
+    void GoToObject(GameObject objectToTravelTo) {
+        destination = objectToTravelTo.transform.position;
+        nmAgent.SetDestination(destination);
     }
 }

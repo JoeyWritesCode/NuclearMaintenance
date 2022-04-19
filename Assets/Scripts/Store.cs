@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Store : MonoBehaviour
 {
-    public string itemStored;
+    public Item itemStored;
     public List<GameObject> inventory = new List<GameObject>();
 
     void Start()
@@ -12,16 +12,22 @@ public class Store : MonoBehaviour
         inventory = new List<GameObject>();
     }
 
-    public void Add(GameObject _object) {
-        inventory.Add(_object);
+    public void Add(Item _item) {
+        if (itemStored.itemName == _item.itemName) {
+            inventory.Add(_item.gameObject);
+            _object.SetActiveRecursively(false);
+        }
+        else {
+            throw new KeyNotFoundException($"{_item.itemName}s are not stored here. The accept item is {itemStored.itemName}");
+        }
     }
 
-    public GameObject Remove() {
+    public Item Remove() {
         if (inventory.Count > 0) {
             GameObject _object = inventory[0];
             _object.SetActiveRecursively(true);
             inventory.RemoveAt(0);
-            return _object;
+            return _object.GetComponent<Item>();
         }
         else
             return null;

@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+
 using UnityEngine;
 
 public class Item : MonoBehaviour
@@ -19,24 +21,21 @@ public class Item : MonoBehaviour
 
     /* -------------------------- These describe HOW the item is processed -------------------------- */
 
-    public Vector3 processPosition;
-
-    public string storeObjectName;
     public GameObject storeObject;
-    public string processObjectName;
     private GameObject processObject;
+    public List<(GameObject, string)> tasks;
+    private int amountOfCompletedTasks = 0;
     public string typeOfProcess;
 
-    private bool needsMaintenance;
     private Facility nextFacility;
     /* public Dictionary<string, List<string>> processInformation; */
 
     public bool isEmpty = false;
     public bool isTransitioning = false;
     public string itemName;
+    private bool hasBeenSelected = false;
 
-
-    public List<GameObject> inventory;
+    public List<Item> inventory;
 
     // Start is called before the first frame update
     void Start()
@@ -61,14 +60,13 @@ public class Item : MonoBehaviour
                 break;
         }
 
-        processObject = GameObject.Find(processObjectName);
-
-        processPosition = processObject.transform.position;
         remaining_time = total_time;
 
         // No longer using colliders, so this is a little redundant. 
         Debug.Log($"{gameObject.name} will be aware of the floor goddamit!");
         Physics.IgnoreCollision(this.GetComponent<Collider>(), GameObject.Find("Floor").GetComponent<Collider>(), false);   
+
+        inventory = new List<Item>();
     }
 
     void Update()
@@ -89,9 +87,14 @@ public class Item : MonoBehaviour
         renderer.material.SetColor("_Color", new Color(remaining_time / total_time, 255, remaining_time / total_time));
     }
 
-    public bool isProcessed()
+    public bool requiresProcessing()
     {
-        return remaining_time <= 0;
+        return remaining_time > 0 || inventory.Count > 0;
+    }
+
+    private bool needsMaintenance()
+    {
+        return remaining_time > 0;
     }
 
     public float GetRemainingTime()
@@ -107,31 +110,25 @@ public class Item : MonoBehaviour
     {
         return gameObject.transform.position;
     }
+
+    private (GameObject, string) GetTask(int taskIndex)
+    {
+        if (taskIndex >= tasks.Count) {
+            return (gameObject, "complete");
+        }
+        else {
+            return tasks[taskIndex];
+        }
+    }
+
     public Vector3 GetProcessPosition()
     {
-        return processPosition;
+        return processObject.transform.position;
     }
+
     public bool inProcessPosition()
     {
-        float distance = (processPosition - gameObject.transform.position).magnitude;
-        Debug.Log($"The distance between {gameObject.name} and it's process position {processPosition} is {distance}. In order to be delivered, it must be less than {distance_threshold}");
-        return (processPosition - gameObject.transform.position).magnitude <= distance_threshold;
-    }
-    public void SetProcessType(string _type)
-    {
-        typeOfProcess = _type;
-        switch (typeOfProcess) {
-            case "delivery":
-                total_time = float.MinValue;
-                break;
-            case "store":
-                total_time = 5.0f;
-                break;
-            case "merge":
-                total_time = 10.0f;
-                break;
-        }
-        remaining_time = total_time;
+        return (GetProcessPosition() - gameObject.transform.position).magnitude <= distance_threshold;
     }
 
 
@@ -140,10 +137,24 @@ public class Item : MonoBehaviour
         return gameObject.name;
     }
 
+    void UpdateTask(int taskIndex)
+    {
+        var (processObject, typeOfProcess) = GetTask(taskIndex);
+    }
+
+    /* public void PerformOneStepOfProcess()
+    {
+        if (inventory.Count > 0) {
+            RemoveFromInventory();
+        }
+        else if (remaining_time > 0) {
+            decrementProcessTime();
+        }
+    } */
+
 
     public void complete()
     {        
-        gameObject.tag = "Item";
         // Increment this objects progression. 
         // Could write to the program at this point too.
         
@@ -152,82 +163,79 @@ public class Item : MonoBehaviour
             typeOfProcess = "delivery"; */
 
         switch (typeOfProcess) {
-            // Only singleton items can be stored. Therefore if task is to deliver the item, you
-            // must empty it's contents
-            case "delivery":
-                if (inventory.Count > 0)
-                    EmptyContents();
+            case "contain":
+                // When a material is placed in a container, it either:
+                    // prepares itself for it's final task
+                    // has been fully processed
+                /* if (amountOfCompletedTasks++ < tasks.Count) {
+                    UpdateTask(amountOfCompletedTasks);
+                }
+                else {
+                    typeOfProcess = "completed";
+                } */
+                UpdateTask(amountOfCompletedTasks++);
                 break;
 
-            // Spawn a new container from this store, and add the current item to it's inventory
-            /* case "merge":
-                var container = Resources.Load(itemName + "Container");
-                Instantiate(container, gameObject.transform.position, Quaternion.identity);
-                Debug.Log(containerName);
-                var container = Resources.Load(containerName);
-                GameObject containerItem = (GameObject) Instantiate(container, gameObject.transform.position, Quaternion.identity);
-                containerItem.GetComponent<Item>().inventory.Add(itemName);
-                Destroy(gameObject);
-                break; */
+            case "collect":
+                UpdateTask(amountOfCompletedTasks++);
+                break;
+            
+            case "deliver":
+                if (inventory.Count > 0) {
+                    foreach (Item item in inventory) {
+                        RemoveFromInventory(item);
+                    }
+                }
+                UpdateTask(amountOfCompletedTasks++);
+                break;
+
+            case "empty contents":
+                // Send the empty item to to it's container store
+                UpdateTask(amountOfCompletedTasks++);
+                break;
 
             // Increment the store's occupancy
             case "store":
-                processObject.GetComponent<Store>().Add(gameObject);
-                //nextFacility.targetObject = gameObject;
-                gameObject.SetActiveRecursively(false);
-                break;
-
-            // Change this name! Used with fissle material
-            case "scoop":
-                inventory.Add(processObject);
-                processObject.SetActiveRecursively(false);
+                UpdateTask(amountOfCompletedTasks++);
                 break;
 
             case "maintenance":
-                needsMaintenance = false;
+                UpdateTask(amountOfCompletedTasks);
                 break;
         }
     }
 
-    void EmptyContents()
+    public void RemoveFromInventory(Item _item)
     {
-
         float spawnRadius = 1.0f;
-        foreach (GameObject component in inventory) {
-            Debug.Log(component.name);
-            var item = Resources.Load(component.GetComponent<Item>().itemName);
-
-            Vector3 spawnPoint = gameObject.transform.position + Random.insideUnitSphere * spawnRadius;
-            Instantiate(item, spawnPoint, Quaternion.identity);
-        }
-        inventory = new List<GameObject>();
-
-        // Bring this to where the empty one's go!
-        SetEmptyDestinations();
-
-        // For now, destroy Warheads after disassembling them.
-        // We're going to need to announce this later - and potentially pass it to maintenance
-        /* if (itemName != "Warhead") {
-            var emptyItem = Resources.Load("Empty" + itemName);
-            Instantiate(emptyItem, gameObject.transform.position, Quaternion.identity);
-        }
-        Destroy(gameObject); */
+        Vector3 spawnPoint = gameObject.transform.position + Random.insideUnitSphere * spawnRadius;
+        
+        _item.gameObject.transform.position = spawnPoint;
+        _item.gameObject.SetActiveRecursively(true);
+        inventory.Remove(_item);
     }
 
-    void SetEmptyDestinations()
+    public void AddToInventory(Item _item)
     {
-        processObjectName = storeObjectName;
-        processObject = GameObject.Find(processObjectName);
-        processPosition = processObject.transform.position;
-        typeOfProcess = "store";
+        inventory.Add(_item);
+        _item.gameObject.SetActiveRecursively(false);
     }
 
-    public bool isUnavailable()
+    public bool isAvailable()
     {
-        return beingCarried || remaining_time < total_time;
+        return gameObject.tag == "Item";
     }
+
     public void setBeingCarried(bool _beingCarried) 
     {
         beingCarried = _beingCarried;
+    }
+
+    public void selectForTask() {
+        gameObject.tag = "ActiveItem";
+    }
+
+    public void deselectForTask() {
+        gameObject.tag = "Item";
     }
 }

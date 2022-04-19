@@ -49,6 +49,7 @@ public class FacilityAgent : Agent
                 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
                 default:
+                    Send("program", $"{message.Sender} : {action}");
                     break;
             }
         }

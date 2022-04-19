@@ -52,10 +52,12 @@
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/MessageException.cs" />
      <Compile Include="Assets/ItemHolder.cs" />
      <Compile Include="Assets/Scripts/AgentHandler.cs" />
+     <Compile Include="Assets/Scripts/Procedural/IKFootSolver.cs" />
      <Compile Include="Assets/ActressMas/ContainerServer/ContainerMessage.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/TMP_DigitValidator.cs" />
      <Compile Include="Assets/ActressMas/Info.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractMessageHeader.cs" />
+     <Compile Include="Assets/Facility.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/TcpSocketAsync.cs" />
      <Compile Include="Assets/ActressMas/Agents/AgentCollection.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/Benchmark02.cs" />
@@ -66,6 +68,7 @@
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/Benchmark01_UGUI.cs" />
      <Compile Include="Assets/ActressMas/Properties/AssemblyInfo.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/TcpSocket.cs" />
+     <Compile Include="Assets/Scripts/SimpleAgent.cs" />
      <Compile Include="Assets/ActressMas/Agents/ObservableAgent.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/BasicClientServerLib/BasicSocketClient.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/TMP_TextSelector_A.cs" />
@@ -83,8 +86,9 @@
      <Compile Include="Assets/ActressMas/ContainerServer/RunnableMas.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/TMP_FrameRateCounter.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/BasicClientServerLib/BasicSocketServer.cs" />
-     <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractThread.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/AsyncClientServerLib/BasicSocketClient.cs" />
+     <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractThread.cs" />
+     <Compile Include="Assets/Scripts/SimpleWorker.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/BasicClientServerLib/BasicSocketClientHandlerReceiveQueue.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/ChatController.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/AsyncClientServerLib/BasicMessage.cs" />
@@ -98,11 +102,12 @@
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/TMP_UiFrameRateCounter.cs" />
      <Compile Include="Assets/ActressMas/Agents/AgentState.cs" />
      <Compile Include="Assets/ActressMas/Agents/Agent.cs" />
+     <Compile Include="Assets/Scripts/Store.cs" />
+     <Compile Include="Assets/Scripts/LaunchItems.cs" />
+     <Compile Include="Assets/Scripts/FacilityAgent.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/CameraController.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractTcpSocketClientHandler.cs" />
-     <Compile Include="Assets/Scripts/Worker.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/SocketServerLib/AbstractAsyncTcpSocketClientHandler.cs" />
-     <Compile Include="Assets/Scripts/UnityAgent.cs" />
      <Compile Include="Assets/ActressMas/ClientServer/AsyncClientServerLib/AsyncSocketClientHandler.cs" />
      <Compile Include="Assets/ActressMas/Agents/Message.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/DropdownSample.cs" />
@@ -120,13 +125,6 @@
      <Compile Include="Assets/Scripts/BDIAgent.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/Benchmark01.cs" />
      <Compile Include="Assets/TextMesh Pro/Examples &amp; Extras/Scripts/TMP_TextEventCheck.cs" />
-     <Compile Include="Assets/Scripts/SimpleWorker.cs" />
-     <Compile Include="Assets/Scripts/LaunchItems.cs" />
-     <Compile Include="Assets/Scripts/Store.cs" />
-     <Compile Include="Assets/Facility.cs" />
-     <Compile Include="Assets/Scripts/SimpleAgent.cs" />
-     <Compile Include="Assets/Scripts/FacilityAgent.cs" />
-     <Compile Include="Assets/Scripts/Procedural/IKFootSolver.cs" />
      <None Include="Assets/TextMesh Pro/Shaders/TMPro.cginc" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets/TextMesh Pro/Shaders/TMP_Bitmap.shader" />
@@ -375,14 +373,14 @@
     <Reference Include="UnityEditor.UnityConnectModule">
         <HintPath>/Applications/2020.3.22f1/Unity.app/Contents/Managed/UnityEngine/UnityEditor.UnityConnectModule.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Burst.Unsafe">
+        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/PackageCache/com.unity.burst@1.3.4/Unity.Burst.Unsafe.dll</HintPath>
+    </Reference>
     <Reference Include="ActressMas">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Assets/ActressMas/bin/Release/ActressMas.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/PackageCache/com.unity.nuget.newtonsoft-json@2.0.0/Runtime/Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Burst.Unsafe">
-        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/PackageCache/com.unity.burst@1.3.4/Unity.Burst.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib">
         <HintPath>/Applications/2020.3.22f1/Unity.app/Contents/MonoBleedingEdge/lib/mono/4.7.1-api/mscorlib.dll</HintPath>
@@ -735,6 +733,9 @@
     <Reference Include="Unity.VSCode.Editor">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.VSCode.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Burst">
+        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Burst.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.TextMeshPro.Editor">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
@@ -750,35 +751,32 @@
     <Reference Include="Unity.TextMeshPro">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Mathematics.Editor">
+        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Mathematics.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Burst.Editor">
+        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Burst.Editor.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.UI">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.PlasticSCM.Editor">
-        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.PlasticSCM.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Rider.Editor">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Rider.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Animation.Rigging.Editor">
+        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Animation.Rigging.Editor.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/UnityEngine.UI.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Mathematics">
-        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Mathematics.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Burst">
-        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Burst.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Mathematics.Editor">
-        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Mathematics.Editor.dll</HintPath>
+    <Reference Include="Unity.PlasticSCM.Editor">
+        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.PlasticSCM.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Animation.Rigging">
         <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Animation.Rigging.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Animation.Rigging.Editor">
-        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Animation.Rigging.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Burst.Editor">
-        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Burst.Editor.dll</HintPath>
+    <Reference Include="Unity.Mathematics">
+        <HintPath>/Users/josephmccracken/Documents/GitHub/BDI/Library/ScriptAssemblies/Unity.Mathematics.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

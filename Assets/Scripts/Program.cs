@@ -69,6 +69,7 @@ public class Percept
 public class SimulationAgent : Agent
 {
     private List<string> events = new List<string>();
+    private int step = 0;
 
     public override void Act(Message message)
     {
@@ -76,13 +77,20 @@ public class SimulationAgent : Agent
         {
             Console.WriteLine($"\t{message.Format()}");
             message.Parse(out string eventForLog, out List<string> details);
-            events.Add($"{eventForLog} {String.Join((string) " - ", details)}");
+            events.Add($"{step} {eventForLog} {String.Join((string) " - ", details)}");
             
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
         }
+
+        step++;
+    }
+
+    public override void ActDefault()
+    {
+        step++;
     }
 
     public List<string> GetEvents()
