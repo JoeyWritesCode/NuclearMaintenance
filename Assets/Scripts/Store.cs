@@ -15,13 +15,14 @@ public class Store : MonoBehaviour
     public void Add(Item _item) {
         if (itemStored.itemName == _item.itemName) {
             inventory.Add(_item.gameObject);
-            _object.SetActiveRecursively(false);
+            _item.gameObject.SetActiveRecursively(false);
         }
         else {
             throw new KeyNotFoundException($"{_item.itemName}s are not stored here. The accept item is {itemStored.itemName}");
         }
     }
 
+    // Might need looking into...
     public Item Remove() {
         if (inventory.Count > 0) {
             GameObject _object = inventory[0];

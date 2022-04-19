@@ -47,12 +47,19 @@ public class SimpleWorker : MonoBehaviour
         nextItem = null;
         heldItem = null;
         destination = gameObject.transform.position;
+
+        TextBox = GetComponent<TMP_Text>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
+        /* if (nextItem == null) {            
+            UpdateTextBox("On the hunt!");
+        }
+        else{
+            UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
+        } */
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -72,7 +79,8 @@ public class SimpleWorker : MonoBehaviour
     private List<GameObject> GetObjectsInRange(Vector3 position, string tag)
     {
         List<GameObject> seenObjects = new List<GameObject>();
-        float visionDistance = (gameObject.GetComponent<Renderer>().bounds.size).magnitude;
+        // totally arbitrary
+        float visionDistance = (gameObject.GetComponent<Renderer>().bounds.size).magnitude * 5;
 
         Collider[] hitColliders = Physics.OverlapSphere(position, visionDistance);
         foreach (var hitCollider in hitColliders)
@@ -107,8 +115,8 @@ public class SimpleWorker : MonoBehaviour
         return nextAction != "decide";
     }
 
-    public void assignItem(Item _item) {
-        nextItem = _item;
+    public void assignItem(string _itemName) {
+        nextItem = GameObject.Find(_itemName).GetComponent<Item>();
     }
 
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -134,7 +142,7 @@ public class SimpleWorker : MonoBehaviour
                             GoToObject(nextItem.gameObject);
                             break;
                         default:
-                            throw new InvalidOperationException("Tasks can either begin with retrival or collection");
+                            throw new InvalidOperationException($"Tasks can either begin with retrival or collection, not {nextItem.typeOfProcess}");
                     }
                     nextAction = nextItem.typeOfProcess;
                 }
@@ -174,7 +182,7 @@ public class SimpleWorker : MonoBehaviour
                 if ((destination - position).magnitude <= grabDistance) {
                     // Maintenance and disassembly tasks are item dependent
                     // therefore they interupt the plan tree, but maintain the task
-                    if (nextItem.requiresProcessing()) {
+                    if (nextItem.requiresMaintenance()) {
                         GoToObject(gameObject);
                         nextAction = "perform action";
                     }
@@ -191,7 +199,7 @@ public class SimpleWorker : MonoBehaviour
                                 GoToObject(nextItem.storeObject);
                                 break;
                             default:    
-                                throw new InvalidOperationException("Collected items can either be delivered or stored");
+                                throw new InvalidOperationException($"Collected items can either be delivered or stored, not {nextItem.typeOfProcess}");
                         }
                         currentTask = nextItem.typeOfProcess;
                         nextAction = "finish task";
@@ -222,12 +230,13 @@ public class SimpleWorker : MonoBehaviour
                 break;
 
             case "perform action":
-                if (nextItem.requiresProcessing()) {
-                    nextItem.PerformOneStepOfProcess();
+                if (nextItem.requiresMaintenance()) {
+                    nextItem.decrementProcessTime();
                 }
                 else {
                     nextAction = "collect";
                 }
+                break;
 
             default:
                 break;
@@ -241,7 +250,6 @@ public class SimpleWorker : MonoBehaviour
         foreach (GameObject itemObject in GetObjectsInRange(gameObject.transform.position, "Item")) {
             Item potentialNextItem = itemObject.GetComponent<Item>();
             if (potentialNextItem.isAvailable()) {
-                Debug.Log($"Found {nextItem.GetName()}! Going to {nextItem.GetPosition()}");
                 nextItem = potentialNextItem;
                 break;
             }
@@ -250,18 +258,10 @@ public class SimpleWorker : MonoBehaviour
 
     void CollectItem(Item _nextItem)
     {
-        // check if distance to item is less than distance threshold
-            Debug.Log($"Let's pick up this {_nextItem.GetName()}");
+        _nextItem.gameObject.SetActiveRecursively(false);
 
-            // Don't know why this isn't working...
-            /* nextItem.gameObject.GetComponent<Rigidbody>().useGravity = false;
-            nextItem.gameObject.transform.position = transform.Find("Hands").transform.position;
-            nextItem.gameObject.transform.parent = gameObject.transform; */
-            _nextItem.gameObject.SetActiveRecursively(false);
-
-            _nextItem.setBeingCarried(true);
-            heldItem = _nextItem;
-            _nextItem.gameObject.tag = "HeldItem";
+        heldItem = _nextItem;
+        _nextItem.gameObject.tag = "HeldItem";
     }
 
     void DeliverItem(Item _item)
@@ -272,11 +272,6 @@ public class SimpleWorker : MonoBehaviour
         _item.setBeingCarried(false);
         heldItem = null;
         _item.gameObject.tag = "Item";
-    }
-
-    void Process()
-    {
-        nextItem.PerformProcess();
     }
 
     void StoreItem()

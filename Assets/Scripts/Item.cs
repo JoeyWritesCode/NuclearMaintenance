@@ -19,11 +19,19 @@ public class Item : MonoBehaviour
 
     private Renderer renderer;
 
+    /* ----------------------------------- a fancy Task class ----------------------------------- */
+    [System.Serializable]
+    public class Task
+    {
+        public GameObject thisTasksObject;
+        public string thisTasksProcessType;
+    }
+
     /* -------------------------- These describe HOW the item is processed -------------------------- */
 
     public GameObject storeObject;
-    private GameObject processObject;
-    public List<(GameObject, string)> tasks;
+    public GameObject processObject;
+    public List<Task> tasks;
     private int amountOfCompletedTasks = 0;
     public string typeOfProcess;
 
@@ -35,31 +43,28 @@ public class Item : MonoBehaviour
     public string itemName;
     private bool hasBeenSelected = false;
 
+    public string maintenanceType;
+
     public List<Item> inventory;
 
     // Start is called before the first frame update
     void Start()
     {
         renderer = gameObject.GetComponent<Renderer>();
-        /* processInformation = objectsBelongWith[itemName];
-        if (inventory.Count == 0)
-            processObject = itemStore;
-        else
-            processObject = GameObject.Find(processInformation[0]);
 
-        typeOfProcess = processInformation[1]; */
-        switch (typeOfProcess) {
-            case "delivery":
-                total_time = float.MinValue;
+        UpdateTask(amountOfCompletedTasks);
+
+        switch (maintenanceType) {
+            case "minor":
+                total_time = 5;
                 break;
-            case "store":
-                total_time = 5.0f;
+            case "major":
+                total_time = 15;
                 break;
-            case "merge":
-                total_time = 10.0f;
+            default:
+                total_time = 0;
                 break;
         }
-
         remaining_time = total_time;
 
         // No longer using colliders, so this is a little redundant. 
@@ -81,22 +86,29 @@ public class Item : MonoBehaviour
         }
     } */
 
+    /* ------------------------------------ Processing functions ------------------------------------ */
+    public bool requiresMaintenance()
+    {
+        return remaining_time > 0;
+    }
+    public Vector3 GetProcessPosition()
+    {
+        return processObject.transform.position;
+    }
+    public bool inProcessPosition()
+    {
+        return (GetProcessPosition() - gameObject.transform.position).magnitude <= distance_threshold;
+    }
     public void decrementProcessTime()
     {
         remaining_time -= days_per_step;
         renderer.material.SetColor("_Color", new Color(remaining_time / total_time, 255, remaining_time / total_time));
     }
 
-    public bool requiresProcessing()
-    {
-        return remaining_time > 0 || inventory.Count > 0;
-    }
-
     private bool needsMaintenance()
     {
         return remaining_time > 0;
     }
-
     public float GetRemainingTime()
     {
         return remaining_time;
@@ -111,26 +123,10 @@ public class Item : MonoBehaviour
         return gameObject.transform.position;
     }
 
-    private (GameObject, string) GetTask(int taskIndex)
+    private Task GetTask(int taskIndex)
     {
-        if (taskIndex >= tasks.Count) {
-            return (gameObject, "complete");
-        }
-        else {
-            return tasks[taskIndex];
-        }
+        return tasks[taskIndex];
     }
-
-    public Vector3 GetProcessPosition()
-    {
-        return processObject.transform.position;
-    }
-
-    public bool inProcessPosition()
-    {
-        return (GetProcessPosition() - gameObject.transform.position).magnitude <= distance_threshold;
-    }
-
 
     public string GetName()
     {
@@ -139,7 +135,16 @@ public class Item : MonoBehaviour
 
     void UpdateTask(int taskIndex)
     {
-        var (processObject, typeOfProcess) = GetTask(taskIndex);
+        if (taskIndex >= tasks.Count) {
+            processObject = null;
+            typeOfProcess = "complete";
+        }
+        else {
+            Task newTask = GetTask(taskIndex);
+            processObject = newTask.thisTasksObject;
+            typeOfProcess = newTask.thisTasksProcessType;
+            Debug.Log($"Next task! {typeOfProcess}");
+        }
     }
 
     /* public void PerformOneStepOfProcess()

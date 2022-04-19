@@ -110,14 +110,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
-  processPosition: {x: 0, y: 0, z: 0}
-  storeObjectName: StoreMaterialA
   storeObject: {fileID: 0}
-  processObjectName: StoreContainersMaterialA
-  typeOfProcess: merge
+  processObject: {fileID: 0}
+  tasks:
+  - thisTasksObject: {fileID: 35334280399436127, guid: 71f4385bd1a39410e9c7fdbadfd7afb4, type: 3}
+    thisTasksProcessType: retrieve container
+  typeOfProcess: 
   isEmpty: 0
   isTransitioning: 0
-  itemName: MaterialA
+  itemName: 
   inventory: []
 --- !u!54 &4663919618281536149
 Rigidbody:
