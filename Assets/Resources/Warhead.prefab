@@ -110,18 +110,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
-  processPosition: {x: 0, y: 0, z: 0}
-  storeObjectName: StoreWarhead
   storeObject: {fileID: 0}
-  processObjectName: Disassembly
+  processObject: {fileID: 0}
+  tasks:
+  - thisTasksObject: {fileID: 5167187194129894987, guid: 146b90ea7085043b984f1066e3f645c8, type: 3}
+    thisTasksProcessType: deliver
+  - thisTasksObject: {fileID: 8568354629278160633, guid: bf1de8515609a40aa981195a65690e50, type: 3}
+    thisTasksProcessType: deliver
   typeOfProcess: delivery
   isEmpty: 0
   isTransitioning: 0
   itemName: Warhead
+  maintenanceType: 
   inventory:
-  - {fileID: 101628930009882606, guid: a2294e0fb398744be90bdb689bfa6cc9, type: 3}
-  - {fileID: 2646494646978693650, guid: 57e67b9b45f274c609f90db2eb87f446, type: 3}
-  - {fileID: 2771073274790699443, guid: 0c80c774934074601998e0a084ce6264, type: 3}
+  - {fileID: 5735585466607495122, guid: a2294e0fb398744be90bdb689bfa6cc9, type: 3}
+  - {fileID: 6572867512793673396, guid: 57e67b9b45f274c609f90db2eb87f446, type: 3}
+  - {fileID: 1970143101873536454, guid: 0c80c774934074601998e0a084ce6264, type: 3}
 --- !u!54 &5073593697976387019
 Rigidbody:
   m_ObjectHideFlags: 0

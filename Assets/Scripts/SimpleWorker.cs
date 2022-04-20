@@ -17,7 +17,7 @@ public class SimpleWorker : MonoBehaviour
 {
 
     /* ------------------------------------ The heads up display ------------------------------------ */
-    private TMP_Text TextBox;
+    private TextMeshPro TextBox;
 
     /* -------------------------------------- NavMesh variables ------------------------------------- */
     private NavMeshAgent nmAgent;
@@ -27,7 +27,7 @@ public class SimpleWorker : MonoBehaviour
     Vector3 infinity = new Vector3(Single.PositiveInfinity, Single.PositiveInfinity, Single.PositiveInfinity);
 
     /* ------------------------------------ The Worker parameters ----------------------------------- */
-    private float grabDistance = 2.0f;
+    private float grabDistance = 1.0f;
 
     /* ---------------------------------- Task management variables --------------------------------- */
     private Item nextItem;
@@ -48,7 +48,7 @@ public class SimpleWorker : MonoBehaviour
         heldItem = null;
         destination = gameObject.transform.position;
 
-        TextBox = GetComponent<TMP_Text>();
+        TextBox = GetComponent<TextMeshPro>();
     }
 
     // Update is called once per frame
@@ -60,6 +60,8 @@ public class SimpleWorker : MonoBehaviour
         else{
             UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
         } */
+        Debug.Log($"Task : {currentTask}");
+        Debug.Log($"Action : {nextAction}");
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -190,13 +192,15 @@ public class SimpleWorker : MonoBehaviour
                         CollectItem(nextItem);
                         nextItem.complete();
 
+                        Debug.Log($"Next task! {nextItem.typeOfProcess} with {nextItem.processObject.name} at {nextItem.GetProcessPosition()}");
                         // Set the task to complete this process
                         switch (nextItem.typeOfProcess) {
                             case "deliver":
                                 GoToObject(nextItem.processObject);
                                 break;
                             case "store":
-                                GoToObject(nextItem.storeObject);
+                                //GoToObject(nextItem.storeObject);
+                                GoToObject(nextItem.processObject);
                                 break;
                             default:    
                                 throw new InvalidOperationException($"Collected items can either be delivered or stored, not {nextItem.typeOfProcess}");
@@ -209,16 +213,23 @@ public class SimpleWorker : MonoBehaviour
 
             // Finish the task
             case "finish task":
-                if ((destination - position).magnitude <= grabDistance) {
+                if ((destination - position).magnitude <= grabDistance) {                    
                     switch (currentTask) {
                         case "deliver":
                             DeliverItem(nextItem);
-                            nextItem.complete();
-                            nextItem = null;
+                            if (nextItem.isEmpty()) {
+                                nextItem.complete();
+                                nextItem = null;
+                            }
+                            else {
+                                nextItem.RemoveFromInventory();
+                            }
                             break;
                         case "store":
-                            StoreItem();
+                            DeliverItem(nextItem);
+                            StoreItem(nextItem);
                             nextItem.complete();
+                            Debug.Log($"{nextItem.itemName} stored!");
                             nextItem = null;
                             break;
                     }
@@ -274,10 +285,10 @@ public class SimpleWorker : MonoBehaviour
         _item.gameObject.tag = "Item";
     }
 
-    void StoreItem()
+    void StoreItem(Item _item)
     {
-        Store store = nextItem.storeObject.GetComponent<Store>();
-        store.Add(nextItem);
+        Store store = _item.storeObject.GetComponent<Store>();
+        store.Add(_item);
     }
 
 

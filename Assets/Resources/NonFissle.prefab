@@ -110,14 +110,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
-  processPosition: {x: 0, y: 0, z: 0}
-  storeObjectName: 
   storeObject: {fileID: 0}
-  processObjectName: 
+  processObject: {fileID: 0}
+  tasks:
+  - thisTasksObject: {fileID: 3798423703657067794, guid: 2dd0a8ff72ab04e6ca223e10b5efb833, type: 3}
+    thisTasksProcessType: retrieve container
   typeOfProcess: 
   isEmpty: 0
   isTransitioning: 0
   itemName: NonFissle
+  maintenanceType: 
   inventory: []
 --- !u!54 &8103281597334833149
 Rigidbody:

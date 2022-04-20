@@ -119,6 +119,7 @@ MonoBehaviour:
   isEmpty: 0
   isTransitioning: 0
   itemName: 
+  maintenanceType: 
   inventory: []
 --- !u!54 &4663919618281536149
 Rigidbody:

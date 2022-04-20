@@ -38,8 +38,6 @@ public class Item : MonoBehaviour
     private Facility nextFacility;
     /* public Dictionary<string, List<string>> processInformation; */
 
-    public bool isEmpty = false;
-    public bool isTransitioning = false;
     public string itemName;
     private bool hasBeenSelected = false;
 
@@ -70,8 +68,6 @@ public class Item : MonoBehaviour
         // No longer using colliders, so this is a little redundant. 
         Debug.Log($"{gameObject.name} will be aware of the floor goddamit!");
         Physics.IgnoreCollision(this.GetComponent<Collider>(), GameObject.Find("Floor").GetComponent<Collider>(), false);   
-
-        inventory = new List<Item>();
     }
 
     void Update()
@@ -136,6 +132,7 @@ public class Item : MonoBehaviour
     void UpdateTask(int taskIndex)
     {
         if (taskIndex >= tasks.Count) {
+            Debug.Log($"{gameObject.name} is done");
             processObject = null;
             typeOfProcess = "complete";
         }
@@ -143,7 +140,6 @@ public class Item : MonoBehaviour
             Task newTask = GetTask(taskIndex);
             processObject = newTask.thisTasksObject;
             typeOfProcess = newTask.thisTasksProcessType;
-            Debug.Log($"Next task! {typeOfProcess}");
         }
     }
 
@@ -186,16 +182,6 @@ public class Item : MonoBehaviour
                 break;
             
             case "deliver":
-                if (inventory.Count > 0) {
-                    foreach (Item item in inventory) {
-                        RemoveFromInventory(item);
-                    }
-                }
-                UpdateTask(amountOfCompletedTasks++);
-                break;
-
-            case "empty contents":
-                // Send the empty item to to it's container store
                 UpdateTask(amountOfCompletedTasks++);
                 break;
 
@@ -210,13 +196,22 @@ public class Item : MonoBehaviour
         }
     }
 
-    public void RemoveFromInventory(Item _item)
+    public void RemoveFromInventory()
     {
         float spawnRadius = 1.0f;
         Vector3 spawnPoint = gameObject.transform.position + Random.insideUnitSphere * spawnRadius;
         
-        _item.gameObject.transform.position = spawnPoint;
-        _item.gameObject.SetActiveRecursively(true);
+        Item _item = inventory[0];
+        // if an unspawned object
+        if (GameObject.Find(_item.gameObject.name) != null) {
+            _item.transform.position = spawnPoint;
+            _item.gameObject.SetActiveRecursively(true); 
+        }
+        else {
+            Debug.Log($"Spawning {_item.itemName}!");
+            GameObject itemObject = Instantiate(Resources.Load(_item.itemName)) as GameObject;
+            itemObject.transform.position = spawnPoint;
+        }
         inventory.Remove(_item);
     }
 
@@ -242,5 +237,10 @@ public class Item : MonoBehaviour
 
     public void deselectForTask() {
         gameObject.tag = "Item";
+    }
+
+    public bool isEmpty() {
+        Debug.Log($"I'm off! But this inventory has {inventory.Count} items. Have a good break!");
+        return inventory.Count == 0;
     }
 }

@@ -5,21 +5,12 @@ using UnityEngine;
 public class Store : MonoBehaviour
 {
     public Item itemStored;
-    public List<GameObject> inventory = new List<GameObject>();
-
-    void Start()
-    {
-        inventory = new List<GameObject>();
-    }
+    public List<GameObject> inventory;
 
     public void Add(Item _item) {
-        if (itemStored.itemName == _item.itemName) {
-            inventory.Add(_item.gameObject);
-            _item.gameObject.SetActiveRecursively(false);
-        }
-        else {
-            throw new KeyNotFoundException($"{_item.itemName}s are not stored here. The accept item is {itemStored.itemName}");
-        }
+        inventory.Add(_item.gameObject);
+        Debug.Log(inventory.Count);
+        _item.gameObject.SetActiveRecursively(false);        
     }
 
     // Might need looking into...
