@@ -142,29 +142,21 @@ public class Program : MonoBehaviour
             env.Add(agent, "Agent_" + i);
         }
 
-        /* FacilityAgent inOutAgent = new FacilityAgent();
-        GameObject.Find("GoodsInOut").GetComponent<Facility>().agent = inOutAgent;
-        env.Add(inOutAgent, "GoodsInOut"); */
+        FacilityAgent inOutAgent = new FacilityAgent();
+        inOutAgent.facility = GameObject.Find("GoodsInOut").GetComponent<Facility>();
+        env.Add(inOutAgent, "GoodsInOut");
 
         FacilityAgent disassemblyAgent = new FacilityAgent();
-        GameObject.Find("Disassembly").GetComponent<Facility>().agent = disassemblyAgent;
+        disassemblyAgent.facility = GameObject.Find("Disassembly").GetComponent<Facility>();
         env.Add(disassemblyAgent, "Disassembly");
 
         FacilityAgent storageA = new FacilityAgent();
-        GameObject.Find("StorageA").GetComponent<Facility>().agent = storageA;
+        storageA.facility = GameObject.Find("StorageA").GetComponent<Facility>();
         env.Add(storageA, "StorageA");
         
         env.Memory.Add("Size", 15);
 
         step = 0;
-
-        // Test me first!
-        RunTests();
-    }
-
-    void RunTests() 
-    {
-        GameObject.Find("StoreContainersMaterialA").GetComponent<Store>().Remove();
     }
 
     async void Update()

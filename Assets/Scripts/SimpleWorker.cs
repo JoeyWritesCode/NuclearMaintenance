@@ -32,8 +32,9 @@ public class SimpleWorker : MonoBehaviour
     /* ---------------------------------- Task management variables --------------------------------- */
     private Item nextItem;
     private Item heldItem;
-    private string nextAction = "decide";
-    private string currentTask;
+    public string nextAction = "decide";
+    public string currentTask = null;
+    private bool taskRecorded;
 
     /* ----------------------------- Facility parameters for global flow ---------------------------- */
     public Facility currentFacility;
@@ -60,14 +61,11 @@ public class SimpleWorker : MonoBehaviour
         else{
             UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
         } */
-        Debug.Log($"Task : {currentTask}");
-        Debug.Log($"Action : {nextAction}");
     }
 
     private void OnTriggerEnter(Collider other) {
-        if (other.tag == "Facility") {
+        if (other.tag == "Facility" && nextAction == "decide") {
             currentFacility = other.GetComponent<Facility>();
-            Debug.Log($"I'm in {currentFacility.GetName()}");
         }
     }
 
@@ -113,12 +111,23 @@ public class SimpleWorker : MonoBehaviour
         return (locationTwo - locationOne).magnitude <= minimumDistance;
     }
 
-    public bool isBusy() {
-        return nextAction != "decide";
-    }
-
     public void assignItem(string _itemName) {
         nextItem = GameObject.Find(_itemName).GetComponent<Item>();
+    }
+
+    public string getTaskDetails() {
+        return $"{nextItem.gameObject.name} {nextItem.itemName} {nextItem.GetLastAction()}";
+    }
+
+    public Item getCurrentItem() {
+        return nextItem;
+    }
+
+    public void resetPlanTree() {
+        nextItem.complete();
+        nextItem = null;
+        currentTask = null;
+        nextAction = "decide";
     }
 
     /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -135,24 +144,23 @@ public class SimpleWorker : MonoBehaviour
                     nextItem.selectForTask();
 
                     // Set the relevant destination to begin this process
-                    switch (nextItem.typeOfProcess) {
-                        case "retrieve container":
-                            // make a plan
-                            GoToObject(nextItem.storeObject);
-                            break;
+
+                    switch (nextItem.GetProcessType()) {
                         case "collect":
                             GoToObject(nextItem.gameObject);
                             break;
                         default:
-                            throw new InvalidOperationException($"Tasks can either begin with retrival or collection, not {nextItem.typeOfProcess}");
+                            GoToObject(nextItem.GetProcessObject());
+                            break;
+                        /* default:
+                            throw new InvalidOperationException($"Tasks can either begin with retrival or collection, not {nextItem.typeOfProcess}"); */
                     }
-                    nextAction = nextItem.typeOfProcess;
+                    nextAction = nextItem.GetProcessType();
                 }
                 else {
                     if ((destination - position).magnitude <= grabDistance) {
                         // get random point in random facility?
                         destination = GetRandomPoint(position, wanderDistance);
-                        Debug.Log($"New location is {destination}");
                         nmAgent.SetDestination(destination);
                     }
                 }
@@ -160,12 +168,22 @@ public class SimpleWorker : MonoBehaviour
 
             case "retrieve container":
                 if ((destination - position).magnitude <= grabDistance) {
-                    Item containerItem = nextItem.storeObject.GetComponent<Store>().Remove();
+                    Item containerItem = nextItem.GetProcessObject().GetComponent<Store>().Pop();
                     CollectItem(containerItem);
                     GoToObject(nextItem.gameObject);
                     nextAction = "contain";
                 }
                 break;
+
+            case "remove":
+                if ((destination - position).magnitude <= grabDistance) {
+                    nextItem.GetProcessObject().GetComponent<Store>().Remove(nextItem);
+                    CollectItem(nextItem);
+                    GoToObject(currentFacility.gameObject);
+                    nextAction = "finish task";
+                }
+                break;
+
 
             case "contain":
                 if ((destination - position).magnitude <= grabDistance) {
@@ -174,9 +192,10 @@ public class SimpleWorker : MonoBehaviour
                     nextItem = null;
 
                     DeliverItem(heldItem);
-                    heldItem.complete();
-
-                    nextAction = "decide";
+                    /* heldItem.complete();
+                    nextAction = "decide"; */
+                    taskRecorded = false;
+                    nextAction = "record task";
                 }
                 break;
 
@@ -192,20 +211,22 @@ public class SimpleWorker : MonoBehaviour
                         CollectItem(nextItem);
                         nextItem.complete();
 
-                        Debug.Log($"Next task! {nextItem.typeOfProcess} with {nextItem.processObject.name} at {nextItem.GetProcessPosition()}");
+                        // Debug.Log($"Next task! {nextItem.typeOfProcess} with {nextItem.processObject.name} at {nextItem.GetProcessPosition()}");
                         // Set the task to complete this process
-                        switch (nextItem.typeOfProcess) {
+                        switch (nextItem.GetProcessType()) {
                             case "deliver":
-                                GoToObject(nextItem.processObject);
+                                GoToObject(nextItem.GetProcessObject());
                                 break;
                             case "store":
                                 //GoToObject(nextItem.storeObject);
-                                GoToObject(nextItem.processObject);
+                                GoToObject(nextItem.GetProcessObject());
                                 break;
+                            case "collect":
+                                throw new InvalidOperationException($"Sync error. Attempting to collect the collected item {nextItem.name}");
                             default:    
                                 throw new InvalidOperationException($"Collected items can either be delivered or stored, not {nextItem.typeOfProcess}");
                         }
-                        currentTask = nextItem.typeOfProcess;
+                        currentTask = nextItem.GetProcessType();
                         nextAction = "finish task";
                     }
                 }
@@ -218,8 +239,7 @@ public class SimpleWorker : MonoBehaviour
                         case "deliver":
                             DeliverItem(nextItem);
                             if (nextItem.isEmpty()) {
-                                nextItem.complete();
-                                nextItem = null;
+                                nextAction = "record task";
                             }
                             else {
                                 nextItem.RemoveFromInventory();
@@ -228,15 +248,9 @@ public class SimpleWorker : MonoBehaviour
                         case "store":
                             DeliverItem(nextItem);
                             StoreItem(nextItem);
-                            nextItem.complete();
-                            Debug.Log($"{nextItem.itemName} stored!");
-                            nextItem = null;
+                            nextAction = "record task";
                             break;
                     }
-                }
-                if (nextItem == null) {
-                    currentTask = null;
-                    nextAction = "decide";
                 }
                 break;
 
@@ -247,6 +261,11 @@ public class SimpleWorker : MonoBehaviour
                 else {
                     nextAction = "collect";
                 }
+                break;
+
+            case "record task":
+                // Terminal state.
+                // Only the Agent can reset a plan tree.
                 break;
 
             default:
@@ -277,7 +296,7 @@ public class SimpleWorker : MonoBehaviour
 
     void DeliverItem(Item _item)
     {
-        _item.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 1, 0);
+        _item.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 0.5f, 0);
         _item.gameObject.SetActiveRecursively(true);
 
         _item.setBeingCarried(false);
@@ -287,8 +306,9 @@ public class SimpleWorker : MonoBehaviour
 
     void StoreItem(Item _item)
     {
-        Store store = _item.storeObject.GetComponent<Store>();
+        Store store = _item.GetProcessObject().GetComponent<Store>();
         store.Add(_item);
+        _item.gameObject.transform.localScale = new Vector3(0, 0, 0);
     }
 
 

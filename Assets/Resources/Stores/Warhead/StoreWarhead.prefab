@@ -110,3 +110,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemStored: {fileID: 0}
   inventory: []
+  itemInventory: []

@@ -24,6 +24,22 @@ public class Facility : MonoBehaviour
     bool m_Started;
     public LayerMask m_LayerMask;
 
+    /* ----------------------------------- a fancy Task class ----------------------------------- */
+    [System.Serializable]
+    public class Task
+    {
+        public GameObject thisTasksObject;
+        public string thisTasksProcessType;
+
+        public Task(GameObject _thisTasksObject, string _thisTasksProcessType) {
+            thisTasksObject = _thisTasksObject;
+            thisTasksProcessType = _thisTasksProcessType;
+        }
+    }
+
+    public Task watchedTask;
+
+
     void Start()
     {
         //Use this to ensure that the Gizmos are being drawn when in Play Mode.
@@ -34,6 +50,11 @@ public class Facility : MonoBehaviour
     public string GetName()
     {
         return gameObject.name;
+    }
+
+    public string GetOutputStoreName()
+    {
+        return localMaterialStore.name;
     }
 
     void FixedUpdate()
@@ -53,30 +74,10 @@ public class Facility : MonoBehaviour
                 hit.GetComponent<SimpleWorker>().currentFacility = this;
                 localFreeAgents.Add(hit.name);
             }
-
+/* 
             if (hit.tag == "Item")
-                hit.GetComponent<Item>().storeObject = localMaterialStore;
+                hit.GetComponent<Item>().storeObject = localMaterialStore; */
         }
-
-        /* if (i > 0) {
-            amountOfTasksInProgress = Convert.ToInt32(Math.Ceiling( (double) i / amountOfComponents));
-        }
-        else 
-            amountOfTasksInProgress = 0;
-
-        Debug.Log($"We have {i} interesting objects, and {amountOfTasksInProgress} tasks going on!"); */
-
-        // Kinda a weird way of organizing it...
-        /* if (amountOfTasksInProgress < lastAmountOfTasks) {
-            if (localFreeAgents.Count > 0) {
-                Debug.Log($"Ready for {nextPhase}!"); 
-                agent.InformAgents(localFreeAgents, nextPhase, targetObject);
-                lastAmountOfTasks = amountOfTasksInProgress;
-            }
-        }
-        else {
-            lastAmountOfTasks = amountOfTasksInProgress;
-        } */
         
     }
 
@@ -88,16 +89,5 @@ public class Facility : MonoBehaviour
         if (m_Started)
             //Draw a cube where the OverlapBox is (positioned where your GameObject is as well as a size)
             Gizmos.DrawWireCube(transform.position, transform.localScale);
-    }
-
-    public void RecordCompletion(Item _item) {
-        if (_item.itemName == watchedItemName && _item.inventory.Count != 0) {
-            Debug.Log($"Nice! Let's tell everyone. There's {localFreeAgents.Count} to pick from");
-            nextFacility.SetupNewTask(localMaterialStore.name);
-        }
-    }
-
-    public void SetupNewTask(string lastMaterialStore) {
-        agent.InformAgents(localFreeAgents, lastMaterialStore, gameObject.name);
     }
 }

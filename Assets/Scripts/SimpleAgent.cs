@@ -34,31 +34,14 @@ public class SimpleAgent : Agent
 
             switch (itemName)
             {
-                /* case "StoreWarhead":
-                    worker.transitionStore = "StoreWarhead";
-                    worker.transitionDestination = "Disassembly";
-                    worker.SetDestination(GameObject.Find("StoreWarhead").transform.position);
-                    worker.SetNextAction("retrieve");
-                    break;
-
-                case "RecycleA":
-                    worker.SetDestination(GameObject.Find("StoreContainersMaterialA").transform.position);
-                    worker.transitionStore = "StoreContainersMaterialA";
-                    
-                    worker.transitionDestination = parameters;
-                    worker.objectToContain = parameters;
-
-                    worker.SetNextAction("retrieve");
-                    break; */
-                
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
                 default:    
-                    if (worker.isBusy()) {
-                        Send(message.Sender, $"reject {name}");
-                    }
-                    else {
+                    if (worker.nextAction == "decide") {
                         worker.assignItem(itemName);
                         Send(message.Sender, $"accept {name}");
+                    }
+                    else {
+                        Send(message.Sender, $"reject {name}");
                     }
                     break;
             }
@@ -69,11 +52,19 @@ public class SimpleAgent : Agent
             //Console.WriteLine(ex.ToString()); // for debugging
         }
 
-        worker.Act();
+        PerformAction();
     }
 
     public override void ActDefault()
     {
+        PerformAction();
+    }
+
+    void PerformAction() {
         worker.Act();
+        if (worker.nextAction == "record task") {
+            Send(worker.currentFacility.name, $"finished {worker.getTaskDetails()}");
+            worker.resetPlanTree();
+        }
     }
 }

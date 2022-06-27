@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -25,14 +26,18 @@ public class Item : MonoBehaviour
     {
         public GameObject thisTasksObject;
         public string thisTasksProcessType;
+
+        public Task(GameObject _thisTasksObject, string _thisTasksProcessType) {
+            thisTasksObject = _thisTasksObject;
+            thisTasksProcessType = _thisTasksProcessType;
+        }
     }
 
     /* -------------------------- These describe HOW the item is processed -------------------------- */
 
-    public GameObject storeObject;
-    public GameObject processObject;
     public List<Task> tasks;
     private int amountOfCompletedTasks = 0;
+    private int taskIndex = 0;
     public string typeOfProcess;
 
     private Facility nextFacility;
@@ -50,8 +55,6 @@ public class Item : MonoBehaviour
     {
         renderer = gameObject.GetComponent<Renderer>();
 
-        UpdateTask(amountOfCompletedTasks);
-
         switch (maintenanceType) {
             case "minor":
                 total_time = 5;
@@ -66,7 +69,7 @@ public class Item : MonoBehaviour
         remaining_time = total_time;
 
         // No longer using colliders, so this is a little redundant. 
-        Debug.Log($"{gameObject.name} will be aware of the floor goddamit!");
+        // Debug.Log($"{gameObject.name} will be aware of the floor goddamit!");
         Physics.IgnoreCollision(this.GetComponent<Collider>(), GameObject.Find("Floor").GetComponent<Collider>(), false);   
     }
 
@@ -89,7 +92,7 @@ public class Item : MonoBehaviour
     }
     public Vector3 GetProcessPosition()
     {
-        return processObject.transform.position;
+        return GetProcessObject().transform.position;
     }
     public bool inProcessPosition()
     {
@@ -119,9 +122,23 @@ public class Item : MonoBehaviour
         return gameObject.transform.position;
     }
 
-    private Task GetTask(int taskIndex)
+    public void AmmendTaskList(GameObject newTaskObject, string newProcessType)
     {
-        return tasks[taskIndex];
+        Debug.Log("New task");
+        taskIndex--;
+        Task newTask = new Task(newTaskObject, newProcessType);
+        tasks.Insert(taskIndex, newTask);
+        Debug.Log($"New tasks: {tasks}");
+    }
+
+    private Task GetTask()
+    {
+        if (taskIndex >= tasks.Count) {
+            return new Task(null, "complete");
+        }
+        else {
+            return tasks[taskIndex];
+        }
     }
 
     public string GetName()
@@ -129,70 +146,26 @@ public class Item : MonoBehaviour
         return gameObject.name;
     }
 
-    void UpdateTask(int taskIndex)
+    public GameObject GetProcessObject()
     {
-        if (taskIndex >= tasks.Count) {
-            Debug.Log($"{gameObject.name} is done");
-            processObject = null;
-            typeOfProcess = "complete";
-        }
-        else {
-            Task newTask = GetTask(taskIndex);
-            processObject = newTask.thisTasksObject;
-            typeOfProcess = newTask.thisTasksProcessType;
-        }
+        return GetTask().thisTasksObject;
     }
-
-    /* public void PerformOneStepOfProcess()
+    public string GetProcessType()
     {
-        if (inventory.Count > 0) {
-            RemoveFromInventory();
-        }
-        else if (remaining_time > 0) {
-            decrementProcessTime();
-        }
-    } */
+        return GetTask().thisTasksProcessType;
+    }
+    public string GetLastAction()
+    {
+        Task lastTask = (Task) tasks.Last();
+        Debug.Log(lastTask.thisTasksProcessType);
+        return lastTask.thisTasksProcessType;
+    }
 
 
     public void complete()
     {        
-        // Increment this objects progression. 
-        // Could write to the program at this point too.
-        
-        // Bit of a weird temporary fix... Will have to think about this later
-        /* if (isTransitioning)
-            typeOfProcess = "delivery"; */
-
-        switch (typeOfProcess) {
-            case "contain":
-                // When a material is placed in a container, it either:
-                    // prepares itself for it's final task
-                    // has been fully processed
-                /* if (amountOfCompletedTasks++ < tasks.Count) {
-                    UpdateTask(amountOfCompletedTasks);
-                }
-                else {
-                    typeOfProcess = "completed";
-                } */
-                UpdateTask(amountOfCompletedTasks++);
-                break;
-
-            case "collect":
-                UpdateTask(amountOfCompletedTasks++);
-                break;
-            
-            case "deliver":
-                UpdateTask(amountOfCompletedTasks++);
-                break;
-
-            // Increment the store's occupancy
-            case "store":
-                UpdateTask(amountOfCompletedTasks++);
-                break;
-
-            case "maintenance":
-                UpdateTask(amountOfCompletedTasks);
-                break;
+        if (GetProcessType() != "maintenance") {
+            taskIndex++;
         }
     }
 
@@ -208,7 +181,6 @@ public class Item : MonoBehaviour
             _item.gameObject.SetActiveRecursively(true); 
         }
         else {
-            Debug.Log($"Spawning {_item.itemName}!");
             GameObject itemObject = Instantiate(Resources.Load(_item.itemName)) as GameObject;
             itemObject.transform.position = spawnPoint;
         }
@@ -240,7 +212,6 @@ public class Item : MonoBehaviour
     }
 
     public bool isEmpty() {
-        Debug.Log($"I'm off! But this inventory has {inventory.Count} items. Have a good break!");
         return inventory.Count == 0;
     }
 }

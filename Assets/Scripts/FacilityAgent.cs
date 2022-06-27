@@ -12,12 +12,16 @@ using UnityEngine.AI;
 public class FacilityAgent : Agent
 {
 
+    public Facility facility;
+    
     private List<string> localAgents;
     private int agentCounter = 0;
     private List<string> transitionActions;
 
     private string lastMaterialStore;
     private string nameOfDestination;
+
+    private string auctionedItemName;
 
     private string phase;
 
@@ -33,20 +37,51 @@ public class FacilityAgent : Agent
         try
         {
             Console.WriteLine($"\t{message.Format()}");
-            message.Parse(out string action, out string parameters);
+            message.Parse(out string action, out List<String> taskInfo);
 
             switch (action)
             {
                 // reply to begin next phase
+                case "start":
+                    // uses the relevant store from the previous facility
+                    // peeks into the store and finds the item
+                    // add "remove from store" to task list
+                    // add "deliver to this facility" to task list
+                    /* Debug.Log($"Let's grab {parameters[1]} from {parameters[0]}");
+                    Store nextStore = GameObject.Find(parameters[0]).GetComponent<Store>();
+                    //Item nextItem = nextStore.GetItem(parameters[1]);
+                    Item nextItem = nextStore.Pop();
+                    Debug.Log($"Next item is {nextItem.gameObject.name}");
+                    nextItem.AmmendTaskList(nextStore.gameObject, "remove");
+                    nextItem.AmmendTaskList(nextStore.gameObject, "collect");
+                    nextItem.AmmendTaskList(facility.gameObject, "deliver");
+                    Debug.Log("Let's find someone to...");
+                    InformAgent(agentCounter++); */
+                    break;
+
                 case "accept":
-                    Debug.Log("Thank you, " + parameters);
+                    Debug.Log("Thank you, " + message.Sender);
+                    agentCounter = 0;
                     break;
 
                 case "reject":
-                    Debug.Log("No worries, " + parameters);
-                    Send("Agent_" + agentCounter++, $"{lastMaterialStore} {nameOfDestination}");
+                    Debug.Log("No worries, " + message.Sender);
+                    InformAgent(agentCounter++);
                     break;
                 
+                case "finished":
+                    string itemObjectName = taskInfo[0];
+                    string itemName = taskInfo[1];
+                    string typeOfProcess = taskInfo[2];
+
+                    Debug.Log($"{message.Sender} has just {typeOfProcess}'d {itemObjectName}");
+                    if (facility.watchedTask.thisTasksObject.name == itemName && facility.watchedTask.thisTasksProcessType == typeOfProcess) {
+                        Debug.Log(facility.nextFacility.name);
+                        //Send(facility.nextFacility.name, $"start {facility.GetOutputStoreName()} {taskInfo[0]}");
+                        Send(facility.nextFacility.name, $"accept");
+                    }
+                    break;
+
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
                 default:
                     Send("program", $"{message.Sender} : {action}");
@@ -60,13 +95,8 @@ public class FacilityAgent : Agent
         }
     }
 
-    public void InformAgents(List<string> agents, string _lastMaterialStore, string _nameOfDestination)
+    public void InformAgent(int _agentCounter)
     {
-        // Send the transition task to all agents deciding
-        localAgents = agents;
-        lastMaterialStore = _lastMaterialStore;
-        nameOfDestination = _nameOfDestination;
-        Debug.Log($"Asking Agent_" + agentCounter);
-        Send("Agent_" + agentCounter++, $"{lastMaterialStore} {nameOfDestination}");
+        Send("Agent_" + _agentCounter, auctionedItemName);
     }
 }
