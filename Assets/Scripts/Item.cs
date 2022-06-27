@@ -124,11 +124,9 @@ public class Item : MonoBehaviour
 
     public void AmmendTaskList(GameObject newTaskObject, string newProcessType)
     {
-        Debug.Log("New task");
-        taskIndex--;
+        taskIndex = 0;
         Task newTask = new Task(newTaskObject, newProcessType);
         tasks.Insert(taskIndex, newTask);
-        Debug.Log($"New tasks: {tasks}");
     }
 
     private Task GetTask()

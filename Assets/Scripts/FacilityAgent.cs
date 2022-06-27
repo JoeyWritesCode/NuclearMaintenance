@@ -47,16 +47,19 @@ public class FacilityAgent : Agent
                     // peeks into the store and finds the item
                     // add "remove from store" to task list
                     // add "deliver to this facility" to task list
-                    /* Debug.Log($"Let's grab {parameters[1]} from {parameters[0]}");
-                    Store nextStore = GameObject.Find(parameters[0]).GetComponent<Store>();
+                    string storeObjectName = taskInfo[0];
+                    string collectedObjectName = taskInfo[1];
+
+
+                    Debug.Log($"Let's grab {collectedObjectName} from {storeObjectName}");
+                    Store nextStore = GameObject.Find(storeObjectName).GetComponent<Store>();
                     //Item nextItem = nextStore.GetItem(parameters[1]);
-                    Item nextItem = nextStore.Pop();
-                    Debug.Log($"Next item is {nextItem.gameObject.name}");
+                    Item nextItem = GameObject.Find(collectedObjectName).GetComponent<Item>();
                     nextItem.AmmendTaskList(nextStore.gameObject, "remove");
                     nextItem.AmmendTaskList(nextStore.gameObject, "collect");
                     nextItem.AmmendTaskList(facility.gameObject, "deliver");
                     Debug.Log("Let's find someone to...");
-                    InformAgent(agentCounter++); */
+                    InformAgent(agentCounter++);
                     break;
 
                 case "accept":
@@ -77,8 +80,8 @@ public class FacilityAgent : Agent
                     Debug.Log($"{message.Sender} has just {typeOfProcess}'d {itemObjectName}");
                     if (facility.watchedTask.thisTasksObject.name == itemName && facility.watchedTask.thisTasksProcessType == typeOfProcess) {
                         Debug.Log(facility.nextFacility.name);
-                        //Send(facility.nextFacility.name, $"start {facility.GetOutputStoreName()} {taskInfo[0]}");
-                        Send(facility.nextFacility.name, $"accept");
+                        Send(facility.nextFacility.name, $"start {facility.GetOutputStoreName()} {itemObjectName}");
+                        //Send(facility.nextFacility.name, $"accept");
                     }
                     break;
 
