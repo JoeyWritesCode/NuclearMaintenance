@@ -30,6 +30,10 @@ public class FacilityAgent : Agent
         Debug.Log($"{Name} is ready to assign work!");
     }
 
+    private Item ObjectNameToItem(string name) {
+        return GameObject.Find(name).GetComponent<Item>();
+    }
+
     // This is only used for when receiving messages from the agent's BDI model. 
     // Could be target percept requests, or a new action to add to the actionList
     public override void Act(Message message)
@@ -41,7 +45,40 @@ public class FacilityAgent : Agent
 
             switch (action)
             {
-                // reply to begin next phase
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+/*                                    A task has been completed                                   */
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+                case "finished":
+                    string itemObjectName = taskInfo[0];
+                    string itemName = taskInfo[1];
+                    string typeOfProcess = taskInfo[2];
+
+                    Debug.Log($"{message.Sender} has just {typeOfProcess}'d {itemObjectName}");
+                   
+/* ------------------------------ Check the output task conditions ------------------------------ */
+
+                    if (facility.watchedTask.thisTasksObject.name == itemName && facility.watchedTask.thisTasksProcessType == typeOfProcess) {
+                        Debug.Log(facility.nextFacility.name);
+                        Send(facility.nextFacility.name, $"start {facility.GetOutputStoreName()} {itemObjectName}");
+                    }
+                    else {
+                        RegenerateItemSpec(ObjectNameToItem(itemObjectName));
+                    }
+                    break;
+
+                case "accept":
+                    Debug.Log("Thank you, " + message.Sender);
+                    agentCounter = 0;
+                    break;
+
+                case "reject":
+                    Debug.Log("No worries, " + message.Sender);
+                    InformAgent(agentCounter++);
+                    break;
+
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+/*                               A previous facility has sent a task                              */
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
                 case "start":
                     // uses the relevant store from the previous facility
                     // peeks into the store and finds the item
@@ -55,34 +92,19 @@ public class FacilityAgent : Agent
                     Store nextStore = GameObject.Find(storeObjectName).GetComponent<Store>();
                     //Item nextItem = nextStore.GetItem(parameters[1]);
                     Item nextItem = GameObject.Find(collectedObjectName).GetComponent<Item>();
+
+/* ------------------------------------- retrieve -> deliver ------------------------------------ */
+                    nextItem.ResetTaskIndex();
                     nextItem.AmmendTaskList(nextStore.gameObject, "remove");
                     nextItem.AmmendTaskList(nextStore.gameObject, "collect");
                     nextItem.AmmendTaskList(facility.gameObject, "deliver");
+                    nextItem.ResetTaskIndex();
+                    
+/* ------------------------------ Inform an agent to take this task ----------------------------- */
                     Debug.Log("Let's find someone to...");
+                    auctionedItemName = nextItem.gameObject.name;
+
                     InformAgent(agentCounter++);
-                    break;
-
-                case "accept":
-                    Debug.Log("Thank you, " + message.Sender);
-                    agentCounter = 0;
-                    break;
-
-                case "reject":
-                    Debug.Log("No worries, " + message.Sender);
-                    InformAgent(agentCounter++);
-                    break;
-                
-                case "finished":
-                    string itemObjectName = taskInfo[0];
-                    string itemName = taskInfo[1];
-                    string typeOfProcess = taskInfo[2];
-
-                    Debug.Log($"{message.Sender} has just {typeOfProcess}'d {itemObjectName}");
-                    if (facility.watchedTask.thisTasksObject.name == itemName && facility.watchedTask.thisTasksProcessType == typeOfProcess) {
-                        Debug.Log(facility.nextFacility.name);
-                        Send(facility.nextFacility.name, $"start {facility.GetOutputStoreName()} {itemObjectName}");
-                        //Send(facility.nextFacility.name, $"accept");
-                    }
                     break;
 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
@@ -101,5 +123,37 @@ public class FacilityAgent : Agent
     public void InformAgent(int _agentCounter)
     {
         Send("Agent_" + _agentCounter, auctionedItemName);
+    }
+
+    private void RegenerateItemSpec(Item item) 
+    {
+        switch (item.GetProcessType())
+        {
+            case "complete":
+                item.ResetTaskIndex();
+                item.AmmendTaskList(item.gameObject, "process");
+            
+            case "deliver":
+                item.ResetTaskIndex();
+                item.AmmendTaskList(item.gameObject, "empty");
+                item.AmmendTaskList(item.gameObject, "process");
+                item.ResetTaskIndex();
+                break;
+
+            case "process":
+                if (item.isContainer()) {
+                    item.ResetTaskIndex();
+                    item.AmmendTaskList(item.store, "deliver");
+                    item.AmmendTaskList(item.store, "store");
+                    item.ResetTaskIndex();
+                }
+                else {
+                    item.ResetTaskIndex();
+                    item.AmmendTaskList(item.container, "retrieve");
+                    item.AmmendTaskList(item.container, "contain");
+                    item.ResetTaskIndex();
+                }
+        }
+
     }
 }

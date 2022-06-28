@@ -136,6 +136,7 @@ public class SimpleWorker : MonoBehaviour
     public void Act()
     {
         position = gameObject.transform.position;
+        Debug.Log(nextAction);
         switch (nextAction) 
         {
             case "decide":
@@ -143,7 +144,7 @@ public class SimpleWorker : MonoBehaviour
                 if (nextItem != null) {
                     nextItem.selectForTask();
 
-                    // Set the relevant destination to begin this process
+                    /* // Set the relevant destination to begin this process
 
                     switch (nextItem.GetProcessType()) {
                         case "collect":
@@ -166,40 +167,12 @@ public class SimpleWorker : MonoBehaviour
                 }
                 break;
 
-            case "retrieve container":
-                if ((destination - position).magnitude <= grabDistance) {
-                    Item containerItem = nextItem.GetProcessObject().GetComponent<Store>().Pop();
-                    CollectItem(containerItem);
-                    GoToObject(nextItem.gameObject);
-                    nextAction = "contain";
-                }
-                break;
-
-            case "remove":
-                if ((destination - position).magnitude <= grabDistance) {
-                    nextItem.GetProcessObject().GetComponent<Store>().Remove(nextItem);
-                    CollectItem(nextItem);
-                    GoToObject(currentFacility.gameObject);
-                    nextAction = "finish task";
-                }
-                break;
-
-
-            case "contain":
-                if ((destination - position).magnitude <= grabDistance) {
-                    heldItem.AddToInventory(nextItem);
-                    nextItem.complete();
-                    nextItem = null;
-
-                    DeliverItem(heldItem);
-                    /* heldItem.complete();
-                    nextAction = "decide"; */
-                    taskRecorded = false;
-                    nextAction = "record task";
-                }
-                break;
-
             case "collect":
+                CollectItem(nextItem);
+                nextAction = nextItem.GetProcessType();
+
+                
+
                 if ((destination - position).magnitude <= grabDistance) {
                     // Maintenance and disassembly tasks are item dependent
                     // therefore they interupt the plan tree, but maintain the task
@@ -232,6 +205,38 @@ public class SimpleWorker : MonoBehaviour
                 }
                 break;
 
+            case "retrieve container":
+                if ((destination - position).magnitude <= grabDistance) {
+                    Item containerItem = nextItem.GetProcessObject().GetComponent<Store>().Pop();
+                    CollectItem(containerItem);
+                    GoToObject(nextItem.gameObject);
+                    nextAction = "contain";
+                }
+                break;
+
+            case "remove":
+                if ((destination - position).magnitude <= grabDistance) {
+                    nextItem.GetProcessObject().GetComponent<Store>().Remove(nextItem);
+                    nextItem.complete();
+                    nextAction = nextItem.GetProcessType();
+                }
+                break;
+
+
+            case "contain":
+                if ((destination - position).magnitude <= grabDistance) {
+                    heldItem.AddToInventory(nextItem);
+                    nextItem.complete();
+                    nextItem = null;
+
+                    DeliverItem(heldItem);
+                    /* heldItem.complete();
+                    nextAction = "decide"; */
+                    taskRecorded = false;
+                    nextAction = "record task";
+                }
+                break;
+
             // Finish the task
             case "finish task":
                 if ((destination - position).magnitude <= grabDistance) {                    
@@ -255,6 +260,7 @@ public class SimpleWorker : MonoBehaviour
                 break;
 
             case "perform action":
+            // if main required, go for it. May destroy object
                 if (nextItem.requiresMaintenance()) {
                     nextItem.decrementProcessTime();
                 }
@@ -288,16 +294,16 @@ public class SimpleWorker : MonoBehaviour
 
     void CollectItem(Item _nextItem)
     {
-        _nextItem.gameObject.SetActiveRecursively(false);
-
         heldItem = _nextItem;
         _nextItem.gameObject.tag = "HeldItem";
+        _nextItem.complete();
     }
 
     void DeliverItem(Item _item)
     {
         _item.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 0.5f, 0);
         _item.gameObject.SetActiveRecursively(true);
+        //_item.gameObject.transform.localScale = new Vector3(1, 1, 1);
 
         _item.setBeingCarried(false);
         heldItem = null;

@@ -122,11 +122,16 @@ public class Item : MonoBehaviour
         return gameObject.transform.position;
     }
 
-    public void AmmendTaskList(GameObject newTaskObject, string newProcessType)
+    public void ResetTaskIndex() 
     {
         taskIndex = 0;
+    }
+
+    public void AmmendTaskList(GameObject newTaskObject, string newProcessType)
+    {
         Task newTask = new Task(newTaskObject, newProcessType);
         tasks.Insert(taskIndex, newTask);
+        taskIndex++;
     }
 
     private Task GetTask()
@@ -211,5 +216,9 @@ public class Item : MonoBehaviour
 
     public bool isEmpty() {
         return inventory.Count == 0;
+    }
+
+    public bool isContainer() {
+        return itemName.EndsWith("Container");
     }
 }
