@@ -132,6 +132,7 @@ public class FacilityAgent : Agent
             case "complete":
                 item.ResetTaskIndex();
                 item.AmmendTaskList(item.gameObject, "process");
+                break;
             
             case "deliver":
                 item.ResetTaskIndex();
@@ -143,16 +144,17 @@ public class FacilityAgent : Agent
             case "process":
                 if (item.isContainer()) {
                     item.ResetTaskIndex();
-                    item.AmmendTaskList(item.store, "deliver");
-                    item.AmmendTaskList(item.store, "store");
+                    item.AmmendTaskList(item.store.gameObject, "deliver");
+                    item.AmmendTaskList(item.store.gameObject, "store");
                     item.ResetTaskIndex();
                 }
                 else {
                     item.ResetTaskIndex();
-                    item.AmmendTaskList(item.container, "take out");
-                    item.AmmendTaskList(item.container, "contain");
+                    item.AmmendTaskList(item.container.gameObject, "take out");
+                    item.AmmendTaskList(item.container.gameObject, "contain");
                     item.ResetTaskIndex();
                 }
+                break;
         }
 
     }

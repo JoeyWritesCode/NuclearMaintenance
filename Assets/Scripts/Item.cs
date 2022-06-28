@@ -49,6 +49,8 @@ public class Item : MonoBehaviour
     public string maintenanceType;
 
     public List<Item> inventory;
+    public Store store;
+    public Item container;
 
     // Start is called before the first frame update
     void Start()
@@ -220,5 +222,11 @@ public class Item : MonoBehaviour
 
     public bool isContainer() {
         return itemName.EndsWith("Container");
+    }
+
+    public List<Item> EmptyContents() {
+        List<Item> contents = inventory;
+        inventory.Clear();
+        return contents;
     }
 }

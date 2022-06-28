@@ -144,7 +144,7 @@ public class SimpleWorker : MonoBehaviour
                 {
                     case true:
                         nextItem.selectForTask();
-                        SwitchAction(nextItem.GetProcessType())
+                        SwitchAction(nextItem.GetProcessType());
                         break;
 
                     case false:
@@ -205,62 +205,16 @@ public class SimpleWorker : MonoBehaviour
                 };
                 break;
 
-            case "process":
+            /* case "process":
                 switch (ProcessItem()) {
                     case true:
-                        SwitchAction(nextItem.complete());
+                        SwitchAction(nextItem.GetProcessType());
                         break;
                     
                     default:
                         break;
                 };
-                break;
-
-
-            case "remove":
-                if ((destination - position).magnitude <= grabDistance) {
-                    nextItem.GetProcessObject().GetComponent<Store>().Remove(nextItem);
-                    nextItem.complete();
-                    nextAction = nextItem.GetProcessType();
-                }
-                break;
-
-
-            case "contain":
-                if ((destination - position).magnitude <= grabDistance) {
-                    heldItem.AddToInventory(nextItem);
-                    nextItem.complete();
-                    nextItem = null;
-
-                    DeliverItem();
-                    /* heldItem.complete();
-                    nextAction = "decide"; */
-                    taskRecorded = false;
-                    nextAction = "record task";
-                }
-                break;
-
-            // Finish the task
-            case "finish task":
-                if ((destination - position).magnitude <= grabDistance) {                    
-                    switch (currentTask) {
-                        case "deliver":
-                            DeliverItem(nextItem);
-                            if (nextItem.isEmpty()) {
-                                nextAction = "record task";
-                            }
-                            else {
-                                nextItem.RemoveFromInventory();
-                            }
-                            break;
-                        case "store":
-                            DeliverItem(nextItem);
-                            StoreItem(nextItem);
-                            nextAction = "record task";
-                            break;
-                    }
-                }
-                break;
+                break; */
 
             case "perform action":
             // if main required, go for it. May destroy object
@@ -280,12 +234,6 @@ public class SimpleWorker : MonoBehaviour
             default:
                 break;
         }
-    }
-
-    void GoTo(GameObject object)
-    {
-        GoToObject(object);
-
     }
 
     // sets the action and applies the implict traversal
@@ -314,7 +262,7 @@ public class SimpleWorker : MonoBehaviour
     }
 
 
-    bool DecideOnTask()
+    bool? DecideOnTask()
     {
         // Final null check in case a facility has interjected with a transition task
         if ((destination - position).magnitude <= grabDistance) {
@@ -327,7 +275,7 @@ public class SimpleWorker : MonoBehaviour
             }
             return false;
         }
-        return null;
+        return new bool?();
     }
 
     void CollectItem(Item _nextItem)
@@ -339,7 +287,7 @@ public class SimpleWorker : MonoBehaviour
 
     bool TakeOutFrom(Store _store)
     {
-        if ((store.gameObject.transform.position - position).magnitude <= grabDistance) {
+        if ((destination - position).magnitude <= grabDistance) {
             _store.Pop();
             CollectItem(nextItem);
             return true;
@@ -347,7 +295,7 @@ public class SimpleWorker : MonoBehaviour
         return false;
     }
 
-    void DeliverItem()
+    bool DeliverItem()
     {
         if ((destination - position).magnitude <- grabDistance) {
             heldItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 0.5f, 0);
@@ -361,7 +309,9 @@ public class SimpleWorker : MonoBehaviour
             nextItem.complete();
 
             heldItem = null;
+            return true;
         }
+        return false;
         
     }
 
@@ -371,7 +321,9 @@ public class SimpleWorker : MonoBehaviour
         if ((destination - position).magnitude <= grabDistance) {
             heldItem.AddToInventory(nextItem);
             nextItem.complete();
+            return true;
         }
+        return false;
     }
 
     bool StoreItem(Store _store)
@@ -385,22 +337,25 @@ public class SimpleWorker : MonoBehaviour
             heldItem = null;
 
             nextItem.complete();
+            return true;
         }
+        return false;
     }
 
-    bool ProcessItem()
-    {
-        switch (currentFacility) {
-            case "Disassembly":
+
 /* --------------------- empty the item's contents, and process each of them -------------------- */
-                
+    /* bool ProcessItem()
+    {
+        switch (currentFacility.name) {
+            case "Disassembly":
+
                 foreach(Item _item in nextItem.EmptyContents()) {
                     _item.SetTaskType("process");
                 };
                 nextItem.SetTaskType("process");
                 break;
         }
-    }
+    } */
 
 
     public List<GameObject> FindNearestWorkers() {
