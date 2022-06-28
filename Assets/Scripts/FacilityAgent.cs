@@ -149,7 +149,7 @@ public class FacilityAgent : Agent
                 }
                 else {
                     item.ResetTaskIndex();
-                    item.AmmendTaskList(item.container, "retrieve");
+                    item.AmmendTaskList(item.container, "take out");
                     item.AmmendTaskList(item.container, "contain");
                     item.ResetTaskIndex();
                 }
