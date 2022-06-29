@@ -89,14 +89,13 @@ public class FacilityAgent : Agent
 
 
                     Debug.Log($"Let's grab {collectedObjectName} from {storeObjectName}");
-                    Store nextStore = GameObject.Find(storeObjectName).GetComponent<Store>();
                     //Item nextItem = nextStore.GetItem(parameters[1]);
                     Item nextItem = GameObject.Find(collectedObjectName).GetComponent<Item>();
 
 /* ------------------------------------- retrieve -> deliver ------------------------------------ */
-                    nextItem.ResetTaskIndex();
-                    nextItem.AmmendTaskList(nextStore.gameObject, "remove");
-                    nextItem.AmmendTaskList(nextStore.gameObject, "collect");
+                    nextItem.ResetTaskList();
+                    nextItem.AmmendTaskList(nextItem.store.gameObject, "retrieve");
+                    //nextItem.AmmendTaskList(nextItem.store.gameObject, "collect");
                     nextItem.AmmendTaskList(facility.gameObject, "deliver");
                     nextItem.ResetTaskIndex();
                     
@@ -130,12 +129,13 @@ public class FacilityAgent : Agent
         switch (item.GetProcessType())
         {
             case "complete":
-                item.ResetTaskIndex();
+                item.ResetTaskList();
                 item.AmmendTaskList(item.gameObject, "process");
+                item.ResetTaskIndex();
                 break;
             
             case "deliver":
-                item.ResetTaskIndex();
+                item.ResetTaskList();
                 item.AmmendTaskList(item.gameObject, "empty");
                 item.AmmendTaskList(item.gameObject, "process");
                 item.ResetTaskIndex();
@@ -143,14 +143,14 @@ public class FacilityAgent : Agent
 
             case "process":
                 if (item.isContainer()) {
-                    item.ResetTaskIndex();
+                    item.ResetTaskList();
                     item.AmmendTaskList(item.store.gameObject, "deliver");
                     item.AmmendTaskList(item.store.gameObject, "store");
                     item.ResetTaskIndex();
                 }
                 else {
-                    item.ResetTaskIndex();
-                    item.AmmendTaskList(item.container.gameObject, "take out");
+                    item.ResetTaskList();
+                    item.AmmendTaskList(item.container.gameObject, "retrieve");
                     item.AmmendTaskList(item.container.gameObject, "contain");
                     item.ResetTaskIndex();
                 }

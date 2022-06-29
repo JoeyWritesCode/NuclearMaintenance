@@ -49,18 +49,18 @@ public class SimpleWorker : MonoBehaviour
         heldItem = null;
         destination = gameObject.transform.position;
 
-        TextBox = GetComponent<TextMeshPro>();
+        TextBox = gameObject.transform.Find("ActionText").GetComponent<TextMeshPro>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        /* if (nextItem == null) {            
-            UpdateTextBox("On the hunt!");
+        try {
+            UpdateTextBox($"Task: {nextAction} {nextItem.GetName()} Destination: {destination} Hands: {heldItem}");
         }
-        else{
-            UpdateTextBox($"{nextAction} {nextItem.GetName()} {destination}");
-        } */
+        catch {
+            UpdateTextBox($"...");
+        }
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -136,7 +136,6 @@ public class SimpleWorker : MonoBehaviour
     public void Act()
     {
         position = gameObject.transform.position;
-        Debug.Log(nextAction);
         switch (nextAction) 
         {
             case "decide":
@@ -197,7 +196,7 @@ public class SimpleWorker : MonoBehaviour
             case "store":
                 switch (StoreItem(heldItem.store)) {
                     case true:
-                        SwitchAction("record task");
+                        SwitchAction(nextItem.GetProcessType());
                         break;
 
                     default:
@@ -205,16 +204,16 @@ public class SimpleWorker : MonoBehaviour
                 };
                 break;
 
-            /* case "process":
-                switch (ProcessItem()) {
+            case "process":
+                switch (Process(nextItem)) {
                     case true:
                         SwitchAction(nextItem.GetProcessType());
                         break;
                     
-                    default:
+                    case false:
                         break;
-                };
-                break; */
+                }
+                break;
 
             case "perform action":
             // if main required, go for it. May destroy object
@@ -226,6 +225,10 @@ public class SimpleWorker : MonoBehaviour
                 }
                 break;
 
+            case "complete":
+                nextAction = "record task";
+                break;
+            
             case "record task":
                 // Terminal state.
                 // Only the Agent can reset a plan tree.
@@ -243,6 +246,9 @@ public class SimpleWorker : MonoBehaviour
 
         switch (nextAction) {
             case "collect":
+                break;
+
+            case "process":
                 break;
 
             case "retrieve":
@@ -297,7 +303,7 @@ public class SimpleWorker : MonoBehaviour
 
     bool DeliverItem()
     {
-        if ((destination - position).magnitude <- grabDistance) {
+        if ((destination - position).magnitude <= grabDistance) {
             heldItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 0.5f, 0);
             heldItem.gameObject.SetActiveRecursively(true);
             //_item.gameObject.transform.localScale = new Vector3(1, 1, 1);
@@ -342,20 +348,31 @@ public class SimpleWorker : MonoBehaviour
         return false;
     }
 
+    bool Process(Item _item)
+    {
+        if (!_item.isEmpty()) {
+            Disassemble(_item);
+            return false;
+        }
+
+        if (_item.requiresMaintenance()) {
+            _item.decrementProcessTime();
+            return false;
+        }
+        else {
+            _item.complete();
+            return true;
+        }
+    }
+
 
 /* --------------------- empty the item's contents, and process each of them -------------------- */
-    /* bool ProcessItem()
+    void Disassemble(Item _nextItem)
     {
-        switch (currentFacility.name) {
-            case "Disassembly":
-
-                foreach(Item _item in nextItem.EmptyContents()) {
-                    _item.SetTaskType("process");
-                };
-                nextItem.SetTaskType("process");
-                break;
-        }
-    } */
+        foreach(Item _item in _nextItem.EmptyContents()) {
+            _item.ResetTaskList(_item.gameObject, "process");
+        };
+    }
 
 
     public List<GameObject> FindNearestWorkers() {

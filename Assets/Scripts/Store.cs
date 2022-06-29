@@ -6,7 +6,7 @@ using UnityEngine;
 public class Store : MonoBehaviour
 {
     public Item itemStored;
-    public List<GameObject> inventory;
+    private List<GameObject> inventory;
     private List<Item> itemInventory;
 
     void Start() {
@@ -16,15 +16,13 @@ public class Store : MonoBehaviour
 
     public void Add(Item _item) {
         inventory.Add(_item.gameObject);
-        itemInventory.Add(_item);
-        Debug.Log(itemInventory.Count);      
+        itemInventory.Add(_item);    
     }
 
     // Might need looking into...
     public Item Pop() {
         if (inventory.Count > 0) {
-            GameObject _object = inventory[0];
-            _object.SetActiveRecursively(true);
+            GameObject _object = Instantiate(inventory[0]);
             inventory.RemoveAt(0);
             return _object.GetComponent<Item>();
         }
@@ -39,7 +37,7 @@ public class Store : MonoBehaviour
     }
 
     // getting a particular item
-    public Item GetItem(string name) {
+    /* public Item GetItem(string name) {
         Debug.Log($"Let's grab this {name}. Occupancy {itemInventory.Count}");
         for (int i = 0; i < inventory.Count; i++) {
             Debug.Log(inventory[i].name);
@@ -49,5 +47,5 @@ public class Store : MonoBehaviour
             }
         }
         return null;
-    }
+    } */
 }

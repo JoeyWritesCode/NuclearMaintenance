@@ -110,18 +110,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
-  storeObject: {fileID: 0}
-  processObject: {fileID: 0}
   tasks:
-  - thisTasksObject: {fileID: 4566914693750858115, guid: 84d4f5377e4be45c6a0687b16e33a3fa, type: 3}
+  - thisTasksObject: {fileID: 5870758795480198483}
     thisTasksProcessType: collect
-  - thisTasksObject: {fileID: 4566914693750858115, guid: 84d4f5377e4be45c6a0687b16e33a3fa, type: 3}
+  - thisTasksObject: {fileID: 8339948224552488539, guid: 76ebbdf4476e249f280013bbcd0999c5, type: 3}
     thisTasksProcessType: store
   typeOfProcess: collect
   itemName: WarheadContainer
   maintenanceType: 
   inventory:
   - {fileID: 5280593910629275788, guid: 882fefc58170541b598ad57eda1cf3c3, type: 3}
+  store: {fileID: 8339948224552488536, guid: 76ebbdf4476e249f280013bbcd0999c5, type: 3}
+  container: {fileID: 0}
 --- !u!54 &5870758795480198482
 Rigidbody:
   m_ObjectHideFlags: 0

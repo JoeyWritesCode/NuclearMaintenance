@@ -124,6 +124,18 @@ public class Item : MonoBehaviour
         return gameObject.transform.position;
     }
 
+    public void ResetTaskList()
+    {
+        tasks = new List<Task>();
+        ResetTaskIndex();
+    }
+    public void ResetTaskList(GameObject _thisTasksObject, string _thisTasksProcessType)
+    {
+        Task task = new Task(_thisTasksObject, _thisTasksProcessType);
+        tasks = new List<Task>() {task};
+        ResetTaskIndex();
+    }
+
     public void ResetTaskIndex() 
     {
         taskIndex = 0;
