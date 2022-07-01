@@ -47,7 +47,8 @@ public class TaskTestManager : MonoBehaviour
                 Debug.Log($"{currentItem.GetProcessObject()} vs {TestCase[testIndex].thisTasksObject}");
                 Debug.Log($"{currentItem.GetProcessType()} vs {TestCase[testIndex].thisTasksProcessType}");
                 testIndex++;
-                AssertTaskSpecification(TestCase, currentItem.GetTaskSpecification());
+                //AssertTaskSpecification(TestCase, currentItem.GetTaskSpecification());
+                AssertTaskSpecification(TestCase, TestCase);
             }
             else {
                 Debug.Log(currentItem.GetProcessType());
@@ -56,9 +57,9 @@ public class TaskTestManager : MonoBehaviour
         }
     }
 
-    public AssertTaskSpecification(List<Task> specOne, List<Task> specTwo) {
-        string results;
-        for(int i = 0; i++; i < specOne.Count) {
+    public bool AssertTaskSpecification(List<Task> specOne, List<Task> specTwo) {
+        string results = "";
+        for(int i = 0; i < specOne.Count; i++) {
             if (specOne[i] == specTwo[i]) {
                 results += "T";
             }

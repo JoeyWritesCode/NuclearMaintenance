@@ -160,6 +160,11 @@ public class Item : MonoBehaviour
         }
     }
 
+    public List<Task> GetTaskSpecification()
+    {
+        return tasks;
+    }
+
     public string GetName()
     {
         return gameObject.name;
