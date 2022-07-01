@@ -153,6 +153,18 @@ public class Program : MonoBehaviour
         FacilityAgent storageA = new FacilityAgent();
         storageA.facility = GameObject.Find("StorageA").GetComponent<Facility>();
         env.Add(storageA, "StorageA");
+
+        FacilityAgent storageB = new FacilityAgent();
+        storageB.facility = GameObject.Find("StorageB").GetComponent<Facility>();
+        env.Add(storageB, "StorageB");
+
+        FacilityAgent recycleA = new FacilityAgent();
+        recycleA.facility = GameObject.Find("RecycleA").GetComponent<Facility>();
+        env.Add(recycleA, "RecycleA");
+
+        FacilityAgent recycleB = new FacilityAgent();
+        recycleB.facility = GameObject.Find("RecycleB").GetComponent<Facility>();
+        env.Add(recycleB, "RecycleB");
         
         env.Memory.Add("Size", 15);
 
@@ -161,13 +173,21 @@ public class Program : MonoBehaviour
 
     async void Update()
     {
-        if (step == amountOfDays * steps_per_day) {
-            File.WriteAllLines("output.txt", programAgent.GetEvents().ToArray());
-            Time.timeScale = 0;
-            Application.Quit();
+        if (amountOfDays == -1) {
+            if (Input.GetKeyDown("space")) {
+                env.RunTurn(step++);
+            }
         }
-        else 
-            env.RunTurn(step++);
+        else {
+            if (step == amountOfDays * steps_per_day) {
+                File.WriteAllLines("output.txt", programAgent.GetEvents().ToArray());
+                Time.timeScale = 0;
+                Application.Quit();
+            }
+            else {
+                env.RunTurn(step++);
+            }
+        }
     }
 
     public Vector3 GetRandomPoint(Vector3 center, float maxDistance) {

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+
 public class TaskTestManager : MonoBehaviour
 {
 
@@ -46,6 +47,7 @@ public class TaskTestManager : MonoBehaviour
                 Debug.Log($"{currentItem.GetProcessObject()} vs {TestCase[testIndex].thisTasksObject}");
                 Debug.Log($"{currentItem.GetProcessType()} vs {TestCase[testIndex].thisTasksProcessType}");
                 testIndex++;
+                AssertTaskSpecification(TestCase, currentItem.GetTaskSpecification());
             }
             else {
                 Debug.Log(currentItem.GetProcessType());
@@ -53,4 +55,22 @@ public class TaskTestManager : MonoBehaviour
             currentItem.complete();
         }
     }
+
+    public AssertTaskSpecification(List<Task> specOne, List<Task> specTwo) {
+        string results;
+        for(int i = 0; i++; i < specOne.Count) {
+            if (specOne[i] == specTwo[i]) {
+                results += "T";
+            }
+            else {
+                results += "F";
+                results += $": {specTwo[i]}";
+                Debug.Log(results);
+                return false;
+            }
+        }
+        return true;
+    }
 }
+
+

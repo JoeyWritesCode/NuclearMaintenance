@@ -133,6 +133,7 @@ public class Item : MonoBehaviour
     {
         Task task = new Task(_thisTasksObject, _thisTasksProcessType);
         tasks = new List<Task>() {task};
+        Debug.Log($"{gameObject.name}'s task is now just {_thisTasksObject}, {_thisTasksProcessType}");
         ResetTaskIndex();
     }
 
@@ -145,6 +146,7 @@ public class Item : MonoBehaviour
     {
         Task newTask = new Task(newTaskObject, newProcessType);
         tasks.Insert(taskIndex, newTask);
+        Debug.Log($"Adding {newTaskObject}, {newProcessType} to {gameObject.name}");
         taskIndex++;
     }
 
@@ -217,6 +219,8 @@ public class Item : MonoBehaviour
 
     public void setBeingCarried(bool _beingCarried) 
     {
+        gameObject.SetActiveRecursively(!_beingCarried);
+        gameObject.tag = _beingCarried ? "HeldItem" : "Item";
         beingCarried = _beingCarried;
     }
 
@@ -237,7 +241,7 @@ public class Item : MonoBehaviour
     }
 
     public List<Item> EmptyContents() {
-        List<Item> contents = inventory;
+        List<Item> contents = new List<Item>(inventory);
         inventory.Clear();
         return contents;
     }

@@ -53,7 +53,7 @@ public class FacilityAgent : Agent
                     string itemName = taskInfo[1];
                     string typeOfProcess = taskInfo[2];
 
-                    Debug.Log($"{message.Sender} has just {typeOfProcess}'d {itemObjectName}");
+                    Debug.Log($"{message.Sender} has just {typeOfProcess}'d {itemName} for {itemObjectName}");
                    
 /* ------------------------------ Check the output task conditions ------------------------------ */
 
@@ -62,8 +62,11 @@ public class FacilityAgent : Agent
                         Send(facility.nextFacility.name, $"start {facility.GetOutputStoreName()} {itemObjectName}");
                     }
                     else {
-                        RegenerateItemSpec(ObjectNameToItem(itemObjectName));
+                        //RegenerateItemSpec(ObjectNameToItem(itemObjectName));
+                        RegenerateItemSpec(ObjectNameToItem(itemName));
                     }
+
+                    Send("program", $"{message.Sender}, {itemObjectName}, {itemName}, {typeOfProcess}");
                     break;
 
                 case "accept":
@@ -97,6 +100,8 @@ public class FacilityAgent : Agent
                     nextItem.AmmendTaskList(nextItem.store.gameObject, "retrieve");
                     //nextItem.AmmendTaskList(nextItem.store.gameObject, "collect");
                     nextItem.AmmendTaskList(facility.gameObject, "deliver");
+                    // specify the location where the item should be delivered
+                    nextItem.AmmendTaskList(facility.gameObject, "process");
                     nextItem.ResetTaskIndex();
                     
 /* ------------------------------ Inform an agent to take this task ----------------------------- */
@@ -108,7 +113,6 @@ public class FacilityAgent : Agent
 
                 // When the message from the BDI is not a BDI Sensing WorldAction, add it to the actionTasks
                 default:
-                    Send("program", $"{message.Sender} : {action}");
                     break;
             }
         }
@@ -142,6 +146,7 @@ public class FacilityAgent : Agent
                 break;
 
             case "process":
+                Debug.Log("Ahh you finished processing!");
                 if (item.isContainer()) {
                     item.ResetTaskList();
                     item.AmmendTaskList(item.store.gameObject, "deliver");

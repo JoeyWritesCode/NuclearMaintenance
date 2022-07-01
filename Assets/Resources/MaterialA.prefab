@@ -110,17 +110,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   time_spent_waiting: 0
-  storeObject: {fileID: 0}
-  processObject: {fileID: 0}
   tasks:
   - thisTasksObject: {fileID: 35334280399436127, guid: 71f4385bd1a39410e9c7fdbadfd7afb4, type: 3}
     thisTasksProcessType: retrieve container
   typeOfProcess: 
-  isEmpty: 0
-  isTransitioning: 0
-  itemName: 
+  itemName: MaterialA
   maintenanceType: 
   inventory: []
+  store: {fileID: 0}
+  container: {fileID: 0}
 --- !u!54 &4663919618281536149
 Rigidbody:
   m_ObjectHideFlags: 0

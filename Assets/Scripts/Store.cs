@@ -6,11 +6,10 @@ using UnityEngine;
 public class Store : MonoBehaviour
 {
     public Item itemStored;
-    private List<GameObject> inventory;
+    private List<GameObject> inventory= new List<GameObject>();
     private List<Item> itemInventory;
 
     void Start() {
-        inventory = new List<GameObject>();
         itemInventory = new List<Item>();
     }
 

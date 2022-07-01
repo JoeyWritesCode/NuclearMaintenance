@@ -9,6 +9,7 @@ public class Facility : MonoBehaviour
     public string watchedItemName;
     public GameObject targetObject;
     public GameObject localMaterialStore;
+    
     public Facility nextFacility;
 
     public int amountOfComponents;

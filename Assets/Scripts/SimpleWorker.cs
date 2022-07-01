@@ -113,6 +113,8 @@ public class SimpleWorker : MonoBehaviour
 
     public void assignItem(string _itemName) {
         nextItem = GameObject.Find(_itemName).GetComponent<Item>();
+        nextItem.selectForTask();
+        SwitchAction(nextItem.GetProcessType());
     }
 
     public string getTaskDetails() {
@@ -157,13 +159,13 @@ public class SimpleWorker : MonoBehaviour
 
             case "collect":
                 CollectItem(nextItem);
-                SwitchAction(nextItem.GetProcessType());
+                SwitchAction(heldItem.GetProcessType());
                 break;
 
             case "retrieve":
                 switch (TakeOutFrom(nextItem.store)) {
                     case true:
-                        SwitchAction(nextItem.GetProcessType());
+                        SwitchAction(heldItem.GetProcessType());
                         break;
 
                     default:
@@ -245,6 +247,10 @@ public class SimpleWorker : MonoBehaviour
         nextAction = action;
 
         switch (nextAction) {
+            case "decide":
+                GoToObject(gameObject);
+                break;
+            
             case "collect":
                 break;
 
@@ -256,7 +262,7 @@ public class SimpleWorker : MonoBehaviour
                 break;
 
             case "deliver":
-                GoToObject(nextItem.gameObject);
+                GoToObject(heldItem.GetProcessObject());
                 break;
 
             case "store":
@@ -287,8 +293,8 @@ public class SimpleWorker : MonoBehaviour
     void CollectItem(Item _nextItem)
     {
         heldItem = _nextItem;
-        _nextItem.gameObject.tag = "HeldItem";
-        _nextItem.complete();
+        heldItem.setBeingCarried(true);
+        heldItem.complete();
     }
 
     bool TakeOutFrom(Store _store)
@@ -303,13 +309,12 @@ public class SimpleWorker : MonoBehaviour
 
     bool DeliverItem()
     {
+        // make sure that the destination is set to the nextItem, so ensures that tasks can be specified from facility
         if ((destination - position).magnitude <= grabDistance) {
             heldItem.gameObject.transform.position = gameObject.transform.position + new Vector3(0, 0.5f, 0);
-            heldItem.gameObject.SetActiveRecursively(true);
             //_item.gameObject.transform.localScale = new Vector3(1, 1, 1);
 
             heldItem.setBeingCarried(false);
-            heldItem.gameObject.tag = "Item";
 
             nextItem = heldItem;
             nextItem.complete();
@@ -337,7 +342,6 @@ public class SimpleWorker : MonoBehaviour
         if ((destination - position).magnitude <= grabDistance) {
             _store.Add(heldItem);
             heldItem.setBeingCarried(false);
-            heldItem.gameObject.tag = "Item";
 
             nextItem = heldItem;
             heldItem = null;
@@ -370,7 +374,9 @@ public class SimpleWorker : MonoBehaviour
     void Disassemble(Item _nextItem)
     {
         foreach(Item _item in _nextItem.EmptyContents()) {
+            Debug.Log(_item.name);
             _item.ResetTaskList(_item.gameObject, "process");
+            Instantiate(_item);
         };
     }
 
